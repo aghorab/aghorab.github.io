@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ahmed Ghorab · Developer</title>
+  <meta name="description" content="Ahmed Ghorab: independent developer in Bratislava building mobile puzzle games, with a background in machine learning, reinforcement learning and blockchain.">
+  <meta property="og:title" content="Ahmed Ghorab · Developer">
+  <meta property="og:description" content="Mobile games, machine learning and the odd blockchain experiment.">
+  <meta property="og:url" content="https://aghorab.github.io/">
+  <meta property="og:image" content="https://avatars.githubusercontent.com/u/15144568?v=4">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23e8590c'/><text x='16' y='22' font-family='monospace' font-size='16' font-weight='700' fill='white' text-anchor='middle'>AG</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #fbfaf8;
+      --surface: #ffffff;
+      --text: #1c1b1a;
+      --muted: #6b6760;
+      --line: #e7e4df;
+      --accent: #e8590c;
+      --accent-soft: #fff1e8;
+      --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #121110;
+        --surface: #1b1a18;
+        --text: #eceae6;
+        --muted: #9a958d;
+        --line: #2c2a27;
+        --accent: #ff8a4c;
+        --accent-soft: #2a1d15;
+        --shadow: none;
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.65 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 0 20px; }
+    .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+    header.nav {
+      position: sticky; top: 0; z-index: 10;
+      background: color-mix(in srgb, var(--bg) 85%, transparent);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+    header.nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 58px; }
+    .logo { font-weight: 700; text-decoration: none; letter-spacing: -.01em; }
+    .logo span { color: var(--accent); }
+    nav a { text-decoration: none; color: var(--muted); font-size: 14px; margin-left: 22px; }
+    nav a:hover { color: var(--text); }
+
+    .hero { padding: 88px 0 64px; display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center; }
+    .eyebrow { color: var(--accent); font-size: 13px; letter-spacing: .04em; margin: 0 0 14px; }
+    h1 { font-size: clamp(34px, 6vw, 52px); line-height: 1.08; letter-spacing: -.03em; margin: 0 0 18px; }
+    .lede { font-size: 18px; color: var(--muted); max-width: 560px; margin: 0 0 28px; }
+    .avatar { width: 150px; height: 150px; border-radius: 28px; border: 1px solid var(--line); box-shadow: var(--shadow); object-fit: cover; }
+    .cta { display: flex; flex-wrap: wrap; gap: 12px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 18px; border-radius: 10px; font-weight: 500; font-size: 15px;
+      text-decoration: none; border: 1px solid var(--line); background: var(--surface);
+      transition: transform .15s, border-color .15s;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: var(--muted); }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn svg { width: 17px; height: 17px; }
+
+    section { padding: 48px 0; border-top: 1px solid var(--line); }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 600; margin: 0 0 28px; }
+
+    .apps { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+    .app {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+      padding: 24px; box-shadow: var(--shadow);
+    }
+    .app-icon {
+      width: 52px; height: 52px; border-radius: 13px; margin-bottom: 16px;
+      display: grid; place-items: center; color: #fff; font-size: 24px; font-weight: 700;
+    }
+    .app h3 { margin: 0 0 6px; font-size: 19px; letter-spacing: -.01em; }
+    .app p { margin: 0 0 16px; color: var(--muted); font-size: 15px; }
+    .app .links { display: flex; gap: 16px; font-size: 14px; }
+    .app .links a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .app .links a:hover { text-decoration: underline; }
+
+    .projects { display: grid; gap: 0; }
+    .project {
+      display: grid; grid-template-columns: 1fr auto; gap: 4px 20px;
+      padding: 18px 0; border-bottom: 1px solid var(--line); text-decoration: none;
+    }
+    .project:last-child { border-bottom: 0; }
+    .project:hover .p-name { color: var(--accent); }
+    .p-name { font-weight: 600; transition: color .15s; }
+    .p-desc { grid-column: 1; color: var(--muted); font-size: 15px; }
+    .p-meta { grid-row: 1 / span 2; grid-column: 2; align-self: center; font-size: 12px; color: var(--muted); white-space: nowrap; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); }
+
+    .skills { display: flex; flex-wrap: wrap; gap: 10px; }
+    .skills span {
+      padding: 7px 14px; border: 1px solid var(--line); border-radius: 999px;
+      font-size: 14px; background: var(--surface);
+    }
+
+    .contact p { color: var(--muted); max-width: 520px; margin: 0 0 22px; }
+
+    footer { padding: 32px 0 48px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+    footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+
+    @media (max-width: 640px) {
+      .hero { grid-template-columns: 1fr; padding: 56px 0 44px; gap: 28px; }
+      .avatar { width: 96px; height: 96px; border-radius: 22px; order: -1; }
+      nav a { margin-left: 14px; }
+      .project { grid-template-columns: 1fr; }
+      .p-meta { grid-row: auto; grid-column: 1; }
+    }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="wrap">
+      <a class="logo" href="#top">ahmed<span>.</span>ghorab</a>
+      <nav>
+        <a href="#apps">Apps</a>
+        <a href="#projects">Projects</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top" class="wrap">
+    <div class="hero">
+      <div>
+        <p class="eyebrow mono">// Bratislava, Slovakia</p>
+        <h1>Hi, I'm Ahmed Ghorab.<br>I build apps &amp; games.</h1>
+        <p class="lede">
+          Independent developer making small, polished mobile puzzle games, with a background
+          in machine learning, reinforcement learning and blockchain research.
+        </p>
+        <div class="cta">
+          <a class="btn primary" href="#apps">See my apps</a>
+          <a class="btn" href="https://github.com/aghorab" rel="me">
+            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            GitHub
+          </a>
+        </div>
+      </div>
+      <img class="avatar" src="https://avatars.githubusercontent.com/u/15144568?v=4" alt="Ahmed Ghorab" width="150" height="150">
+    </div>
+
+    <section id="apps">
+      <h2>Apps</h2>
+      <div class="apps">
+        <article class="app">
+          <div class="app-icon" style="background:linear-gradient(135deg,#e8590c,#f59f00)">▦</div>
+          <h3>Rectango: Logic Puzzle</h3>
+          <p>A grid-based logic puzzle game built around rectangles. Clean, relaxing, and made for quick sessions.</p>
+          <div class="links">
+            <a href="rectango/privacy.html">Privacy policy</a>
+          </div>
+        </article>
+        <article class="app">
+          <div class="app-icon" style="background:linear-gradient(135deg,#1c7ed6,#15aabf)">➚</div>
+          <h3>Arrow Escape</h3>
+          <p>A puzzle game about getting the arrows off the board. Every level is built in, with no account needed and progress kept on your device.</p>
+          <div class="links">
+            <a href="arrowescape/privacy-policy.html">Privacy policy</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="projects">
+      <h2>Selected projects</h2>
+      <div class="projects">
+        <a class="project" href="https://github.com/aghorab/PalCert">
+          <span class="p-name">PalCert</span>
+          <span class="p-desc">Blockchain-based certificate verification and attestation system for higher-education institutions in Palestine.</span>
+          <span class="p-meta mono"><span class="tag">Solidity</span></span>
+        </a>
+        <a class="project" href="https://github.com/aghorab/Ghorab_Lunarlander">
+          <span class="p-name">Lunar Lander RL</span>
+          <span class="p-desc">Reinforcement-learning agent trained to land the lunar module, built as a course project.</span>
+          <span class="p-meta mono"><span class="tag">Python</span></span>
+        </a>
+        <a class="project" href="https://github.com/aghorab/Omron-TM5-700-Cobot">
+          <span class="p-name">Omron TM5-700 Cobot</span>
+          <span class="p-desc">MATLAB kinematic modelling of the Omron TM5-700 collaborative robot arm.</span>
+          <span class="p-meta mono"><span class="tag">MATLAB</span></span>
+        </a>
+        <a class="project" href="https://github.com/aghorab/Ensemble_Learning_Ghorab_Project">
+          <span class="p-name">Ensemble Learning</span>
+          <span class="p-desc">Experiments with ensemble classifiers and dynamic ensemble selection (with a DESlib fork).</span>
+          <span class="p-meta mono"><span class="tag">Python</span></span>
+        </a>
+        <a class="project" href="https://github.com/aghorab/tensorflow_V2_DEMO">
+          <span class="p-name">TensorFlow demos</span>
+          <span class="p-desc">Side-by-side TensorFlow 1.x and 2.x examples for teaching and migration.</span>
+          <span class="p-meta mono"><span class="tag">Python</span></span>
+        </a>
+      </div>
+    </section>
+
+    <section id="skills">
+      <h2>Toolbox</h2>
+      <div class="skills">
+        <span>Mobile games</span>
+        <span>TypeScript</span>
+        <span>React</span>
+        <span>Python</span>
+        <span>TensorFlow</span>
+        <span>Reinforcement learning</span>
+        <span>Solidity</span>
+        <span>MATLAB</span>
+        <span>Robotics</span>
+      </div>
+    </section>
+
+    <section id="contact" class="contact">
+      <h2>Contact</h2>
+      <p>Questions about one of my apps, a collaboration idea, or just want to say hi? My inbox is open.</p>
+      <div class="cta">
+        <a class="btn primary" href="mailto:aghorab.slovakia@gmail.com">aghorab.slovakia@gmail.com</a>
+        <a class="btn" href="https://github.com/aghorab">github.com/aghorab</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© <span id="y">2026</span> Ahmed Ghorab</span>
+      <span class="mono">aghorab.github.io</span>
+    </div>
+  </footer>
+  <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+</body>
+</html>
