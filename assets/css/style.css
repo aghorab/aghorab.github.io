@@ -75,7 +75,15 @@ h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .1em; color: va
 }
 .app h3 { margin: 0 0 6px; font-size: 19px; letter-spacing: -.01em; }
 .app p { margin: 0 0 16px; color: var(--muted); font-size: 15px; }
-.app .links { display: flex; gap: 16px; font-size: 14px; }
+.app .links { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; font-size: 14px; }
+.app .links a.store, .app .links .store {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 13px; border-radius: 9px;
+  background: var(--text); color: var(--bg); text-decoration: none;
+}
+.app .links a.store:hover { text-decoration: none; opacity: .88; }
+.app .links .store svg { width: 15px; height: 15px; }
+.app .links .store.soon { background: transparent; color: var(--muted); border: 1px dashed var(--line); }
 .app .links a { color: var(--accent); text-decoration: none; font-weight: 500; }
 .app .links a:hover { text-decoration: underline; }
 
