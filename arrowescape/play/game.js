@@ -493,9 +493,17 @@ function interstitialThen(go) {
   });
 }
 
+/* The simulated video below keeps every path playable in the test harness (file://) and on a
+   development server. The public website has no advertising at all, so a free simulated reward
+   there would be a hole in the economy: no video is offered on it, and none can be shown. The
+   Android WebView is served from https://localhost, so this never touches the app. */
+const PUBLIC_WEB = /^https?:$/.test(location.protocol) && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+function videosOffered() { return !!(window.Ads && Ads.isNative) || !PUBLIC_WEB; }
+
 function showRewardedAd(placement, onReward, onBack) {
   lastRewardedAt = Date.now();                // no interstitial on the heels of a chosen video
   const back = () => { if (onBack) onBack(); else closeModal(); };
+  if (!videosOffered()) { back(); toast(AD_MESSAGES.unavailable); return; }
   if (!window.Ads || !Ads.isNative) {
     /* a browser has no advertising: simulate one so every path stays playable and testable */
     openModal('<h3>Advertisement</h3><p>A simulated rewarded advertisement is playing.</p>', {});
@@ -2151,14 +2159,15 @@ function resetProgress() {
 /* ---------- paying for help: coins or a rewarded video ---------- */
 function askPayment(title, cost, onPay) {
   const short = save.coins < cost;
+  const video = videosOffered();
   openModal(`<h3>${title}</h3>
-    <p>${short ? `You have ${save.coins} coins and this costs ${cost}. A video pays for it instead.` : 'Choose how to pay for it.'}</p>
+    <p>${short ? `You have ${save.coins} coins and this costs ${cost}.${video ? ' A video pays for it instead.' : ' New stars earn more coins.'}` : 'Choose how to pay for it.'}</p>
     <div class="stack">
       ${short
-        ? `<button class="btn primary" data-act="ad">&#9654; Watch a video</button>
+        ? `${video ? '<button class="btn primary" data-act="ad">&#9654; Watch a video</button>' : ''}
            <button class="btn gold" data-act="coins" disabled>Pay <i class="coin-ic"></i>${cost}</button>`
         : `<button class="btn gold" data-act="coins">Pay <i class="coin-ic"></i>${cost}</button>
-           <button class="btn" data-act="ad">Watch a video instead</button>`}
+           ${video ? '<button class="btn" data-act="ad">Watch a video instead</button>' : ''}`}
       <button class="btn" data-act="no">Cancel</button>
     </div>`, {
     coins: () => { if (save.coins < cost) return; addCoins(-cost); closeModal(); onPay(); },
@@ -2244,7 +2253,7 @@ function showRules(w, onClose) {
        Stars: 1 for finishing, 1 for finishing with at least ${Math.round(CFG.timeStarShare * 100)}% of the time left, 1 for finishing without a crash.
        Arrows fly across the empty space inside the board and only leave at the outer frame, so a flight can hit a far part of the board.
        Tapping the same blocked arrow again does not cost another life. Pinch to zoom, and once the board is larger than the screen you can drag it with one finger. There is no undo, so look before you tap.</p>
-       <p style="font-size:13px">The clock starts with your first tap, or after twenty seconds of looking. If time or lives run out you may continue twice on a board, with coins or a video.
+       <p style="font-size:13px">The clock starts with your first tap, or after twenty seconds of looking. If time or lives run out you may continue twice on a board, with coins${videosOffered() ? ' or a video' : ''}.
        ${CFG.unlockStars} stars in a world open the next one. The daily puzzle is one attempt with one continue, and it begins when you press Start.</p>`
     : '<p style="font-size:13px">The first level of the world is a short introduction. The Rules button reopens this at any time.</p>';
   const headLine = w < 0 ? '<h3>How to play</h3>'
@@ -3602,7 +3611,7 @@ function winLevel() {
     ${reward ? `<div class="reward"><i class="coin-ic" style="width:24px;height:24px"></i>+${reward}</div>`
              : '<p style="font-size:13px">Improve your mastery to earn more coins: finish without crashes, faster, or without a hint.</p>'}
     ${note}
-    <div class="stack">${reward >= DOUBLE_MIN && !doubled ? '<button class="btn gold" data-act="double">&#9654; Watch a video to double your coins</button>' : ''}${nav()}</div>
+    <div class="stack">${reward >= DOUBLE_MIN && !doubled && videosOffered() ? '<button class="btn gold" data-act="double">&#9654; Watch a video to double your coins</button>' : ''}${nav()}</div>
     ${askRate && !save.rated ? rateInvite() : ''}`,
     Object.assign({
       double: () => {
@@ -3631,7 +3640,7 @@ function failModal(title, text, contLabel, onCont) {
   const choices = () => openModal(`<h3>${title}</h3><p>${text}${canCont || !contLabel ? '' : ' There are no continues left on this board.'}</p>
     <div class="stack">
       ${canCont ? `<button class="btn gold" data-act="cont" ${save.coins < CFG.continueCost ? 'disabled' : ''}>${contLabel} <i class="coin-ic"></i>${CFG.continueCost}</button>
-      <button class="btn" data-act="ad">&#9654; Watch a video: ${contLabel.replace('Continue: ', '')}</button>` : ''}
+      ${videosOffered() ? `<button class="btn" data-act="ad">&#9654; Watch a video: ${contLabel.replace('Continue: ', '')}</button>` : ''}` : ''}
       ${sp && sp.kind === 'daily' ? '' : '<button class="btn primary" data-act="retry">Retry level</button>'}
       <button class="btn" data-act="levels">${sp ? 'Back' : 'Level list'}</button>
     </div>`, {
