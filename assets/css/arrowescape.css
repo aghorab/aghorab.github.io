@@ -1,0 +1,65 @@
+/* Arrow Escape landing page. Builds on style.css, with the game's own colours. */
+body.ae {
+  --bg: #f3f1ea;
+  --accent: #2b5fa8;
+  --accent-soft: #e6eef9;
+}
+@media (prefers-color-scheme: dark) {
+  body.ae {
+    --bg: #121110;
+    --accent: #6b9ce0;
+    --accent-soft: #1a2433;
+  }
+}
+.ae footer a { text-decoration: none; }
+
+.ae-hero { padding: 72px 0 40px; text-align: center; }
+.ae-mark { width: 120px; height: 120px; margin-bottom: 10px; }
+.ae-hero .lede { margin-left: auto; margin-right: auto; }
+.ae-hero .cta { justify-content: center; }
+.btn svg { width: 16px; height: 16px; }
+.btn.soon { color: var(--muted); border-style: dashed; background: transparent; cursor: default; }
+.btn.soon:hover { transform: none; border-color: var(--line); }
+.ae-note { color: var(--muted); font-size: 14px; margin: 16px 0 0; }
+
+.ae-shots {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+  padding: 16px 0 56px; max-width: 760px; margin: 0 auto;
+}
+.ae-shots figure { margin: 0; }
+.ae-shots img {
+  display: block; width: 100%; height: auto;
+  border-radius: 22px; border: 1px solid var(--line); box-shadow: var(--shadow);
+}
+
+.ae-rules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.ae-rules div {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  padding: 18px 20px; color: var(--muted); font-size: 15px;
+}
+.ae-rules b { display: block; color: var(--text); margin-bottom: 4px; }
+
+.ae-worlds {
+  list-style: none; counter-reset: w; padding: 0; margin: 0;
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 40px;
+}
+.ae-worlds li {
+  counter-increment: w; display: flex; align-items: baseline; gap: 12px;
+  padding: 11px 0; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 14px;
+}
+.ae-worlds li::before {
+  content: counter(w, decimal-leading-zero);
+  font-family: "JetBrains Mono", ui-monospace, monospace; color: var(--accent); font-size: 13px;
+}
+.ae-worlds li span { color: var(--text); font-weight: 600; font-size: 15px; margin-right: auto; }
+.ae-more { color: var(--muted); margin: 24px 0 0; }
+
+@media (max-width: 640px) {
+  .ae-hero { padding: 48px 0 28px; }
+  .ae-rules, .ae-worlds { grid-template-columns: 1fr; }
+  .ae-shots {
+    grid-template-columns: repeat(3, 72%); overflow-x: auto; scroll-snap-type: x mandatory;
+    margin: 0 -20px; padding: 8px 20px 40px;
+  }
+  .ae-shots figure { scroll-snap-align: center; }
+}
