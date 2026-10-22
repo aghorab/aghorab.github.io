@@ -21,7 +21,7 @@
       <a class="logo" href="#top">ahmed<span>.</span>ghorab</a>
       <nav>
         <a href="#apps">Apps</a>
-        <a href="#projects">Projects</a>
+        <a href="#testers">Testers</a>
         <a href="#contact">Contact</a>
       </nav>
     </div>
@@ -51,6 +51,19 @@
       <h2>Apps</h2>
       <div class="apps">
         <article class="app">
+          <img class="app-icon" src="assets/img/woolandwolves-icon.png" alt="" width="52" height="52">
+          <h3><a href="woolandwolves/" style="text-decoration:none">Wool &amp; Wolves</a> <span class="new">New</span></h3>
+          <p>Cut the ropes, drop the wolves, save every sheep. A rope cutting puzzle with ten worlds and two hundred levels, offline.</p>
+          <div class="links">
+            <a class="store" href="woolandwolves/#trailer">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 4v16l13-8z"/></svg>
+              Watch the trailer
+            </a>
+            <a href="#testers">Test it early</a>
+            <a href="woolandwolves/privacy-policy.html">Privacy policy</a>
+          </div>
+        </article>
+        <article class="app">
           <div class="app-icon" style="background:linear-gradient(135deg,#e8590c,#f59f00)">▦</div>
           <h3>Rectango: Shikaku Logic Puzzle</h3>
           <p>A calm Shikaku-style number puzzle. Draw rectangles, find the one solution. No luck and no guessing.</p>
@@ -67,14 +80,80 @@
           <h3><a href="arrowescape/" style="text-decoration:none">Arrow Escape</a></h3>
           <p>Tap an arrow to send it off the board. Ten worlds of new rules, two hundred boards, and it plays offline. Try it in your browser.</p>
           <div class="links">
-            <a class="store" href="arrowescape/play/">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 4v16l13-8z"/></svg>
-              Play in browser
+            <a class="store" href="https://play.google.com/store/apps/details?id=eu.fablestudio.arrowescape">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3.6 1.8 13.8 12 3.6 22.2a1.5 1.5 0 0 1-.6-1.2V3c0-.5.2-.9.6-1.2Zm11.3 11.3 2.4 2.4-11 6.3 8.6-8.7Zm3.7-3.6 2.8 1.6c.9.5.9 1.8 0 2.3l-2.8 1.6-2.6-2.7 2.6-2.8ZM6.3 2.2l11 6.3-2.4 2.4-8.6-8.7Z"/></svg>
+              Get it on Google Play
             </a>
-            <a href="arrowescape/">More</a>
+            <a href="arrowescape/play/">Play in browser</a>
             <a href="arrowescape/privacy-policy.html">Privacy policy</a>
           </div>
         </article>
+      </div>
+    </section>
+
+    <section id="testers">
+      <h2>Become a tester</h2>
+      <div class="testers">
+        <div class="testers-intro">
+          <h3>Play my games before anyone else.</h3>
+          <p>
+            I am looking for people to try new games and apps before they reach Google Play:
+            play a build for a few days, then tell me what felt confusing, too hard or broken.
+            Testers get every new game first, and their name in the credits if they like.
+          </p>
+          <ul>
+            <li>An Android phone or tablet is all you need.</li>
+            <li>Google Play invites testers by the Google account on their phone, so the form asks for it.</li>
+            <li>No obligation: test when you have time, leave whenever you want.</li>
+          </ul>
+        </div>
+
+        <form id="tester-form" class="tform" novalidate
+              data-endpoint=""
+              data-sitekey="">
+          <div class="row2">
+            <label>Your name<input name="name" autocomplete="name" required maxlength="80"></label>
+            <label>Email<input name="email" type="email" autocomplete="email" required maxlength="120"></label>
+          </div>
+          <label>Google account on your Android device
+            <input name="googleEmail" type="email" required maxlength="120" placeholder="you@gmail.com">
+            <small>Google Play only lets testers in by this address. It can be the same as above.</small>
+          </label>
+          <div class="row2">
+            <label>Country<input name="country" autocomplete="country-name" required maxlength="60"></label>
+            <label>Phone or tablet model<input name="device" required maxlength="80" placeholder="e.g. Pixel 8, Galaxy A54"></label>
+          </div>
+          <label>Android version
+            <select name="androidVersion">
+              <option value="">I am not sure</option>
+              <option>16</option><option>15</option><option>14</option><option>13</option><option>12</option><option>11</option><option>10 or older</option>
+            </select>
+          </label>
+          <fieldset>
+            <legend>What would you like to test?</legend>
+            <label class="check"><input type="checkbox" name="apps" value="woolandwolves" checked> Wool &amp; Wolves</label>
+            <label class="check"><input type="checkbox" name="apps" value="arrowescape"> Arrow Escape</label>
+            <label class="check"><input type="checkbox" name="apps" value="rectango"> Rectango</label>
+            <label class="check"><input type="checkbox" name="apps" value="future"> Future games and apps</label>
+          </fieldset>
+          <fieldset>
+            <legend>Have you tested apps before?</legend>
+            <label class="check"><input type="radio" name="experience" value="none" checked> Never</label>
+            <label class="check"><input type="radio" name="experience" value="some"> A few times</label>
+            <label class="check"><input type="radio" name="experience" value="lots"> Often</label>
+          </fieldset>
+          <label><span>Anything else? <span class="opt">(optional)</span></span>
+            <textarea name="note" rows="3" maxlength="500"></textarea>
+          </label>
+          <!-- Hidden from people; a form-filling script fills it in and is quietly ignored. -->
+          <div class="hp" aria-hidden="true"><label>Leave this empty<input name="website" tabindex="-1" autocomplete="off"></label></div>
+          <label class="check consent"><input type="checkbox" name="consent" required>
+            <span>I agree that Ahmed Ghorab keeps these answers to invite me to test builds. They are stored privately, never shared or sold, and deleted on request to <a href="mailto:aghorab.slovakia@gmail.com">aghorab.slovakia@gmail.com</a>.</span>
+          </label>
+          <div id="ts-box" class="ts"></div>
+          <button class="btn primary" type="submit">Send my application</button>
+          <p class="tform-msg" role="status" aria-live="polite"></p>
+        </form>
       </div>
     </section>
 
@@ -141,5 +220,6 @@
     </div>
   </footer>
   <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+  <script src="assets/js/testers.js" defer></script>
 </body>
 </html>

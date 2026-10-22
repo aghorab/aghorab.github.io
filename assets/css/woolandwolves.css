@@ -1,0 +1,70 @@
+/* Wool & Wolves page. Builds on style.css, with the game's felt greens and creams. */
+body.ww {
+  --bg: #fbf6ea;
+  --accent: #234b3b;
+  --accent-soft: #e4eee6;
+  --gold: #d99a1e;
+}
+@media (prefers-color-scheme: dark) {
+  body.ww {
+    --bg: #101512;
+    --surface: #18201b;
+    --line: #26322b;
+    --accent: #7fc4a2;
+    --accent-soft: #1b2a22;
+    --gold: #f0b94a;
+  }
+}
+.ww footer a { text-decoration: none; }
+
+.ww-hero { padding: 64px 0 40px; text-align: center; }
+.ww-icon { width: 112px; height: 112px; border-radius: 26px; box-shadow: var(--shadow); margin-bottom: 14px; }
+.ww-hero h1 span { color: var(--gold); }
+.ww-tag { font-weight: 600; font-size: 18px; margin: -6px 0 14px; }
+.ww-hero .lede { margin-left: auto; margin-right: auto; }
+.ww-hero .cta { justify-content: center; }
+.btn.soon { color: var(--muted); border-style: dashed; background: transparent; cursor: default; }
+.btn.soon:hover { transform: none; border-color: var(--line); }
+
+.ww-video video {
+  display: block; width: 100%; height: auto; aspect-ratio: 16 / 9;
+  border-radius: 18px; background: #234b3b; box-shadow: var(--shadow);
+}
+
+.ww-shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.ww-shots img {
+  display: block; width: 100%; height: auto; border-radius: 16px;
+  border: 1px solid var(--line); box-shadow: var(--shadow);
+}
+
+.ww-rules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.ww-rules div {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  padding: 18px 20px; color: var(--muted); font-size: 15px;
+}
+.ww-rules b { display: block; color: var(--text); margin-bottom: 4px; }
+
+.ww-worlds {
+  list-style: none; counter-reset: w; padding: 0; margin: 0;
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 40px;
+}
+.ww-worlds li {
+  counter-increment: w; display: flex; align-items: baseline; gap: 12px;
+  padding: 11px 0; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 14px;
+}
+.ww-worlds li::before {
+  content: counter(w, decimal-leading-zero);
+  font-family: "JetBrains Mono", ui-monospace, monospace; color: var(--gold); font-size: 13px;
+}
+.ww-worlds li span { color: var(--text); font-weight: 600; font-size: 15px; margin-right: auto; }
+.ww-more { color: var(--muted); margin: 24px 0 0; }
+
+@media (max-width: 640px) {
+  .ww-hero { padding: 44px 0 28px; }
+  .ww-rules, .ww-worlds { grid-template-columns: 1fr; }
+  .ww-shots {
+    grid-template-columns: repeat(6, 70%); overflow-x: auto; scroll-snap-type: x mandatory;
+    margin: 0 -20px; padding: 4px 20px 16px;
+  }
+  .ww-shots img { scroll-snap-align: center; }
+}
