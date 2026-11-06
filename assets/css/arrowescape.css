@@ -22,15 +22,6 @@ body.ae {
 .btn.soon:hover { transform: none; border-color: var(--line); }
 .ae-note { color: var(--muted); font-size: 14px; margin: 16px 0 0; }
 
-.ae-shots {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
-  padding: 16px 0 56px; max-width: 760px; margin: 0 auto;
-}
-.ae-shots figure { margin: 0; }
-.ae-shots img {
-  display: block; width: 100%; height: auto;
-  border-radius: 22px; border: 1px solid var(--line); box-shadow: var(--shadow);
-}
 
 .ae-rules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
 .ae-rules div {
@@ -57,9 +48,4 @@ body.ae {
 @media (max-width: 640px) {
   .ae-hero { padding: 48px 0 28px; }
   .ae-rules, .ae-worlds { grid-template-columns: 1fr; }
-  .ae-shots {
-    grid-template-columns: repeat(3, 72%); overflow-x: auto; scroll-snap-type: x mandatory;
-    margin: 0 -20px; padding: 8px 20px 40px;
-  }
-  .ae-shots figure { scroll-snap-align: center; }
 }

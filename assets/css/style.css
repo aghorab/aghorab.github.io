@@ -169,3 +169,25 @@ img.app-icon { display: block; object-fit: cover; }
   .tform { padding: 18px; }
   .tform .row2 { grid-template-columns: 1fr; }
 }
+
+/* Game pages: a store video beside the store text, and a swipeable strip of phone screenshots */
+.gm-about { display: grid; grid-template-columns: 300px 1fr; gap: 40px; align-items: start; }
+.gm-video-v { display: block; width: 100%; height: auto; aspect-ratio: 9 / 16; border-radius: 22px; background: #000; box-shadow: var(--shadow); }
+.gm-video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 18px; background: #000; box-shadow: var(--shadow); }
+.gm-text h3 { font-size: 17px; margin: 0 0 6px; }
+.gm-text h3:not(:first-child) { margin-top: 22px; }
+.gm-text p, .gm-text li { color: var(--muted); font-size: 15px; margin: 0; }
+.gm-text ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.gm-shots {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 220px; gap: 16px;
+  overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 2px 16px;
+}
+.gm-shots img {
+  display: block; width: 100%; height: auto; scroll-snap-align: start;
+  border-radius: 18px; border: 1px solid var(--line); box-shadow: var(--shadow);
+}
+@media (max-width: 640px) {
+  .gm-about { grid-template-columns: 1fr; gap: 24px; }
+  .gm-video-v { max-width: 300px; margin: 0 auto; }
+  .gm-shots { grid-auto-columns: 62%; margin: 0 -20px; padding: 4px 20px 16px; scroll-padding: 0 20px; }
+}

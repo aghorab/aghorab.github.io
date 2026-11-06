@@ -26,17 +26,6 @@ body.ww {
 .btn.soon { color: var(--muted); border-style: dashed; background: transparent; cursor: default; }
 .btn.soon:hover { transform: none; border-color: var(--line); }
 
-.ww-video video {
-  display: block; width: 100%; height: auto; aspect-ratio: 16 / 9;
-  border-radius: 18px; background: #234b3b; box-shadow: var(--shadow);
-}
-
-.ww-shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-.ww-shots img {
-  display: block; width: 100%; height: auto; border-radius: 16px;
-  border: 1px solid var(--line); box-shadow: var(--shadow);
-}
-
 .ww-rules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
 .ww-rules div {
   background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
@@ -62,9 +51,4 @@ body.ww {
 @media (max-width: 640px) {
   .ww-hero { padding: 44px 0 28px; }
   .ww-rules, .ww-worlds { grid-template-columns: 1fr; }
-  .ww-shots {
-    grid-template-columns: repeat(6, 70%); overflow-x: auto; scroll-snap-type: x mandatory;
-    margin: 0 -20px; padding: 4px 20px 16px;
-  }
-  .ww-shots img { scroll-snap-align: center; }
 }

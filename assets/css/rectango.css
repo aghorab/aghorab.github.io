@@ -1,0 +1,29 @@
+/* Rectango page. Builds on style.css, with the game's ink, paper and stamp red. */
+body.rg {
+  --bg: #f7f5ef;
+  --accent: #c73e2e;
+  --accent-soft: #f6e3df;
+}
+@media (prefers-color-scheme: dark) {
+  body.rg {
+    --bg: #0f1730;
+    --surface: #16244a;
+    --line: #253a6e;
+    --accent: #e8c15a;
+    --accent-soft: #23305a;
+  }
+}
+.rg footer a { text-decoration: none; }
+.rg-hero { padding: 64px 0 40px; text-align: center; }
+.rg-icon { width: 112px; height: 112px; margin-bottom: 14px; }
+.rg-hero h1 span { font-size: .4em; vertical-align: middle; background: #c73e2e; color: #f7f5ef; padding: .12em .35em; border-radius: .2em; display: inline-block; transform: rotate(-8deg); }
+.rg-tag { font-weight: 600; font-size: 18px; margin: -6px 0 14px; }
+.rg-hero .lede { margin-left: auto; margin-right: auto; }
+.rg-hero .cta { justify-content: center; }
+.rg-features { columns: 2; column-gap: 40px; display: block; }
+.rg-features li { break-inside: avoid; margin-bottom: 8px; }
+.rg-quiet { margin-top: 20px !important; }
+@media (max-width: 640px) {
+  .rg-hero { padding: 44px 0 28px; }
+  .rg-features { columns: 1; }
+}
