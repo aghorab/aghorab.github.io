@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Grocery Checkout | Queueing Simulation</title>
   <meta name="description" content="Interactive single-server queue simulation (Grocery Checkout) using the simulation-table method of Chapter 3.">
-  <link rel="stylesheet" href="./css/style.css?v=3">
+  <link rel="stylesheet" href="./css/style.css?v=4">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.js" integrity="sha384-zYPBGXwO4633CABX/5Spf6emCKUJCfoOkhOMYyxMsatqQZPnDblmmOewfjsIVWCM" crossorigin="anonymous" defer></script>
-  <script type="module" src="./js/ui-single.js?v=3"></script>
+  <script type="module" src="./js/ui-single.js?v=4"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to the main content</a>
@@ -35,10 +35,21 @@
       <div id="dist-panel"></div>
     </details>
 
+    <div class="panel no-print" id="discipline-panel">
+      <div class="controls">
+        <div class="field">
+          <label for="discipline">Queue discipline (order of service)</label>
+          <select id="discipline" aria-describedby="discipline-desc"></select>
+        </div>
+        <p id="discipline-desc" class="muted small" style="margin: 0; flex: 1 1 300px"></p>
+      </div>
+    </div>
+
     <div class="tabs" role="tablist" aria-label="Simulation mode" id="mode-tabs">
       <button type="button" role="tab" id="tab-textbook" data-mode="textbook" aria-controls="panel-textbook" aria-selected="true">Step by step (20 customers)</button>
       <button type="button" role="tab" id="tab-day" data-mode="day" aria-controls="panel-day" aria-selected="false" tabindex="-1">One day (100 customers)</button>
       <button type="button" role="tab" id="tab-days" data-mode="days" aria-controls="panel-days" aria-selected="false" tabindex="-1">Fifty days</button>
+      <button type="button" role="tab" id="tab-compare" data-mode="compare" aria-controls="panel-compare" aria-selected="false" tabindex="-1">Compare disciplines</button>
     </div>
 
     <!-- Mode 1: step by step (textbook example and experiments) ------------->
@@ -203,6 +214,64 @@
         <figure style="margin-top: 24px">
           <figcaption>Average waiting time by day</figcaption>
           <div class="chart-box" id="days-chart-line" data-label="Line chart: average waiting time of each day with the overall average"></div>
+        </figure>
+      </div>
+    </section>
+    <!-- Mode 4: compare queue disciplines ---------------------------------->
+    <section id="panel-compare" role="tabpanel" aria-labelledby="tab-compare" hidden>
+      <div class="panel">
+        <p class="muted small secondary">Every selected discipline serves exactly the same customers: the same arrival times and the same service times, drawn from the same random digits. Only the order of service differs, so every difference in the results comes from the discipline.</p>
+        <div class="controls">
+          <div class="field">
+            <label for="cmp-seed">Seed</label>
+            <input type="text" id="cmp-seed" inputmode="numeric" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="cmp-days">Days (1 to 500)</label>
+            <input type="number" id="cmp-days" min="1" max="500" step="1" value="50">
+          </div>
+          <div class="field">
+            <label for="cmp-n">Customers per day (2 to 1000)</label>
+            <input type="number" id="cmp-n" min="2" max="1000" step="1" value="100">
+          </div>
+          <div class="control-group">
+            <button type="button" class="primary" id="cmp-new">Run new comparison</button>
+            <button type="button" id="cmp-run">Run with this seed</button>
+          </div>
+        </div>
+        <fieldset class="cmp-choices">
+          <legend>Disciplines to compare</legend>
+          <div id="cmp-disciplines" class="control-group"></div>
+        </fieldset>
+        <p class="error" id="cmp-error" role="alert"></p>
+        <p class="status-line" id="cmp-status" role="status"></p>
+      </div>
+
+      <div class="panel">
+        <h2>Findings</h2>
+        <div id="cmp-findings"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Averages over all days</h2>
+        <div class="table-scroll"><table class="plain" id="cmp-table-avg"></table></div>
+        <p class="no-print"><button type="button" id="cmp-csv">Download this table as CSV</button></p>
+      </div>
+
+      <div class="panel">
+        <h2 id="cmp-day1-title">Day 1</h2>
+        <div class="table-scroll"><table class="plain" id="cmp-table-day1"></table></div>
+      </div>
+
+      <div class="panel">
+        <h2>Charts</h2>
+        <figure>
+          <figcaption>Average, standard deviation and maximum of the waiting time (averages over all days)</figcaption>
+          <div class="chart-box" id="cmp-chart-wait" data-label="Grouped bar chart: average waiting time, standard deviation and maximum waiting time for each discipline"></div>
+        </figure>
+        <figure style="margin-top: 24px">
+          <figcaption>Distribution of the waiting time in queue (all customers of all days)</figcaption>
+          <div class="chart-box" id="cmp-chart-dist" data-label="Grouped bar chart: share of customers in each waiting-time interval for each discipline"></div>
         </figure>
       </div>
     </section>
