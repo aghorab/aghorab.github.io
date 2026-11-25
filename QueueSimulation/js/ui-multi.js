@@ -18,21 +18,30 @@ initChrome();
 const TB = CALLCENTER_TEXTBOOK;
 
 // ---------------------------------------------------------------------------
-// Server-selection rule. The Baker-first rule (Quiz 1) is reachable only when
-// CONFIG.enableBakerFirstRule is true.
+// Server-selection rule: a toggle button. CONFIG.enableBakerFirstRule sets its
+// state when the page opens; the engine implements both rules.
 // ---------------------------------------------------------------------------
 
-let preferred = 'Able';
-if (CONFIG.enableBakerFirstRule) {
-  $('#rule-panel').hidden = false;
-  $('#compare-panel').hidden = false;
-  $('#rule').addEventListener('change', () => {
-    preferred = $('#rule').value === 'Baker' ? 'Baker' : 'Able';
-    if (runResult) runOne();
-    if (runsResult) runMany();
-  });
-}
+let preferred = CONFIG.enableBakerFirstRule ? 'Baker' : 'Able';
 const ruleName = (p) => (p === 'Baker' ? 'Baker-first rule' : 'Able-first rule (textbook)');
+
+function showRule() {
+  const on = preferred === 'Baker';
+  const btn = $('#rule-toggle');
+  btn.setAttribute('aria-pressed', String(on));
+  btn.textContent = `Baker-first rule: ${on ? 'on' : 'off'}`;
+  $('#rule-text').textContent = on
+    ? 'When both servers are idle, Baker takes the call (Baker-first rule). Turn the rule off to return to the textbook rule, in which Able takes such calls.'
+    : 'When both servers are idle, Able takes the call (textbook rule). Turn the Baker-first rule on to send such calls to Baker instead.';
+}
+showRule();
+$('#rule-toggle').addEventListener('click', () => {
+  preferred = preferred === 'Baker' ? 'Able' : 'Baker';
+  showRule();
+  rebuildReplay();
+  if (runResult) runOne();
+  if (runsResult) runMany();
+});
 
 // ---------------------------------------------------------------------------
 // Distributions
@@ -44,19 +53,23 @@ const distPanel = createDistributionPanel($('#dist-panel'), [
   { id: 'arrival', def: CALL_ARRIVAL, valueLabel: 'Time between calls (min)' },
   { id: 'able', def: ABLE_SERVICE, valueLabel: 'Able service time (min)' },
   { id: 'baker', def: BAKER_SERVICE, valueLabel: 'Baker service time (min)' }
-], (d, ok) => {
+], (d, ok) => applyDists(d, ok, true));
+
+let currentMode = 'textbook';
+/** Takes the distributions in effect; `edited` is true after a change by the user. */
+function applyDists(d, ok, edited) {
   dists = d;
   distsOk = ok;
-  const msg = ok ? '' : 'The probabilities in the input distributions do not sum to 1. Correct them before running.';
-  $('#run-error').textContent = msg;
-  $('#runs-error').textContent = msg;
-  ['#run-new', '#run-run', '#runs-new', '#runs-run'].forEach((s) => { $(s).disabled = !ok; });
-  if (ok) {
+  const msg = ok ? '' : 'The input distributions are not valid; see the messages in the distribution panel. Correct them before running.';
+  ['#run-error', '#runs-error', '#tb-error'].forEach((s) => { $(s).textContent = msg; });
+  ['#run-new', '#run-run', '#runs-new', '#runs-run', '#tb-new-digits', '#tb-use-seed'].forEach((s) => { $(s).disabled = !ok; });
+  if (ok && edited) {
     const note = 'The input distributions have changed; run again to apply them.';
     if (runResult) $('#run-status').textContent = note;
     if (runsResult) $('#runs-status').textContent = note;
+    if (currentMode === 'textbook' && !useTextbookDigits) { replayDists = d; rebuildReplay(); }
   }
-});
+}
 dists = distPanel.get();
 
 const E = (d) => ({ EArrival: d.arrival.expected, EAble: d.able.expected, EBaker: d.baker.expected });
@@ -156,81 +169,132 @@ function makeAnimation(prefix) {
 }
 
 // ---------------------------------------------------------------------------
-// Mode 1: textbook replay (hidden while CALLCENTER_TEXTBOOK.confirmed is false)
+// Mode 1: step-by-step replay of 26 calls. It uses the textbook digits once
+// CALLCENTER_TEXTBOOK.confirmed is true; until then it uses random digits
+// generated from a seed, so that the replay works now.
 // ---------------------------------------------------------------------------
 
-let tbPlayer = null;
-if (TB.confirmed && TB.arrivalDigits.length === TB.calls && TB.serviceDigits.length === TB.calls) {
-  $('#tab-textbook').hidden = false;
-  const res = simulateMultiServer({ arrivalDigits: TB.arrivalDigits, serviceDigits: TB.serviceDigits, dists: distPanel.get(), preferred: 'Able' });
-  const { anim, delay } = makeAnimation('tb');
-  anim.load(res.events, res.rows);
-  const table = $('#tb-table');
-  const REVEAL = { caller: 1, arrivalDigits: 1, iat: 1, arrival: 1, ableAvail: 1, bakerAvail: 1, server: 2, serviceDigits: 2, service: 2, begin: 2, delay: 2, end: 3, system: 3 };
-  const STAGE = { arrival: 1, start: 2, departure: 3 };
-  renderTable(table, COLUMNS, res.rows, { footLabel: 'Totals' });
-  let prevStages = new Array(res.rows.length).fill(0);
-  let override = null;
-  const render = (k) => {
-    const st = new Array(res.rows.length).fill(0);
-    for (let i = 0; i < k; i++) { const e = res.events[i]; st[e.customer - 1] = Math.max(st[e.customer - 1], STAGE[e.type]); }
-    res.rows.forEach((r, i) => {
-      COLUMNS.forEach((c, j) => {
-        const cell = table.tBodies[0].rows[i].cells[j];
-        const show = st[i] >= REVEAL[c.key];
-        cell.textContent = show ? c.get(r) : '';
-        cell.classList.toggle('changed', show && prevStages[i] < REVEAL[c.key]);
-      });
-    });
-    COLUMNS.forEach((c, j) => {
-      if (!c.total || j === 0) return;
-      const vis = res.rows.filter((r, i) => st[i] >= REVEAL[c.key]);
-      table.tFoot.rows[0].cells[j].textContent = vis.length ? c.total(vis) : '';
-    });
-    prevStages = st;
-    const done = k >= res.events.length;
-    const last = k ? res.events[k - 1] : null;
-    markCurrentRow(table, last ? last.customer - 1 : null);
-    anim.show(k);
-    $('#tb-explain').textContent = override || (last ? explainEvent(last, res.rows, 'Able') : 'Press "Next event" to process the first event.');
-    override = null;
-    $('#tb-next-event').disabled = done;
-    $('#tb-next-customer').disabled = done;
-    const m = multiServerMeasures(res.totals, E(distPanel.get()));
-    const P = TB.published;
-    const checks = [
-      ['Run length (min)', P.run, m.run, m.run === P.run],
-      ['Able utilization', fmt(P.ableUtil), fmt(m.ableUtil), fmt(m.ableUtil) === fmt(P.ableUtil)],
-      ['Baker utilization', fmt(P.bakerUtil), fmt(m.bakerUtil), fmt(m.bakerUtil) === fmt(P.bakerUtil)],
-      ['Callers who waited', `${P.waited} of ${P.calls}`, `${m.waited} of ${res.totals.n}`, m.waited === P.waited && res.totals.n === P.calls],
-      ['Average delay of all callers (min)', fmt(P.avgDelay), fmt(m.avgDelay), fmt(m.avgDelay) === fmt(P.avgDelay)],
-      ['Average delay of those who waited (min)', fmt(P.avgDelayWaiters), fmt(m.avgDelayWaiters), fmt(m.avgDelayWaiters) === fmt(P.avgDelayWaiters)]
-    ];
-    $('#tb-verify').innerHTML = `<div class="table-scroll"><table class="plain"><thead><tr><th scope="col" class="text">Quantity</th><th scope="col">Published value</th><th scope="col">Computed value</th><th scope="col" class="text">Check</th></tr></thead><tbody>${checks.map(([l, p, c, ok]) => `<tr><td class="text">${l}</td><td>${p}</td><td>${done ? c : '<span class="muted">pending</span>'}</td><td class="text">${done ? (ok ? '<span class="check-ok">OK &#10003;</span>' : '<span class="check-bad">Different &#10007;</span>') : '<span class="muted">complete the replay</span>'}</td></tr>`).join('')}</tbody></table></div>`;
-    if (done) showResults($('#tb-results'), m, 'Able');
-    else $('#tb-results').innerHTML = '<p class="muted">The measures appear when the replay reaches the end.</p>';
-  };
-  tbPlayer = new Player({
-    total: res.events.length,
-    getDelay: delay,
-    onStep: (k) => { anim.setDuration(delay()); render(k); },
-    onState: (playing) => { $('#tb-run').textContent = playing ? 'Pause' : 'Run to end'; }
-  });
-  $('#tb-next-event').addEventListener('click', () => { tbPlayer.stop(); anim.setDuration(500); tbPlayer.stepTo(tbPlayer.k + 1); });
-  $('#tb-next-customer').addEventListener('click', () => {
-    tbPlayer.stop();
-    const next = prevStages.findIndex((s) => s < 3) + 1;
-    if (!next) return;
-    const target = res.events.findIndex((e) => e.type === 'departure' && e.customer === next) + 1;
-    override = ['arrival', 'start', 'departure'].map((type) => explainEvent({ type, customer: next }, res.rows, 'Able')).join(' ');
-    anim.setDuration(500);
-    tbPlayer.stepTo(Math.max(target, tbPlayer.k));
-  });
-  $('#tb-run').addEventListener('click', () => { if (tbPlayer.playing) tbPlayer.stop(); else tbPlayer.play(); });
-  $('#tb-reset').addEventListener('click', () => { tbPlayer.stop(); prevStages = prevStages.map(() => 0); tbPlayer.stepTo(0); });
-  $('#tb-csv').addEventListener('click', () => downloadCSV('call-center-textbook-26-calls.csv', CSV_HEADER, csvRows(res.rows)));
-  render(0);
+const useTextbookDigits = TB.confirmed && TB.arrivalDigits.length === TB.calls && TB.serviceDigits.length === TB.calls;
+const tbAnimation = makeAnimation('tb');
+const tbTable = $('#tb-table');
+const REVEAL = { caller: 1, arrivalDigits: 1, iat: 1, arrival: 1, ableAvail: 1, bakerAvail: 1, server: 2, serviceDigits: 2, service: 2, begin: 2, delay: 2, end: 3, system: 3 };
+const STAGE = { arrival: 1, start: 2, departure: 3 };
+let tbRes = null;
+let tbSeedText = String(CONFIG.defaultSeed);
+let tbPrevStages = [];
+let tbOverride = null;
+$('#tb-seed').value = tbSeedText;
+
+if (useTextbookDigits) {
+  $('#tab-textbook').textContent = 'Textbook replay (26 calls)';
+  $('#tb-seed-controls').hidden = true;
+  $('#tb-source').textContent = 'This replay uses the random digits of the textbook run (slides 84 to 112) and the textbook distributions.';
 }
+
+/** Builds the 26-call table from the textbook digits or from the seed. */
+function rebuildReplay() {
+  if (useTextbookDigits) {
+    tbRes = simulateMultiServer({ arrivalDigits: TB.arrivalDigits, serviceDigits: TB.serviceDigits, dists: distPanel.get(), preferred });
+  } else {
+    tbRes = simulateMultiServerSeeded({ seed: normalizeSeed(tbSeedText), n: TB.calls, dists: replayDists, preferred });
+    $('#tb-source').textContent = `The random digits of this replay were generated automatically (seed ${tbSeedText}), because the textbook digits are not yet entered. Press "New random digits" for another set, or type a seed to share one replay with the class.`;
+  }
+  tbAnimation.anim.load(tbRes.events, tbRes.rows);
+  renderTable(tbTable, COLUMNS, tbRes.rows, { footLabel: 'Totals' });
+  tbPrevStages = new Array(tbRes.rows.length).fill(0);
+  if (tbPlayer) { tbPlayer.setTotal(tbRes.events.length); tbPlayer.stepTo(0); }
+}
+
+function renderReplay(k) {
+  const res = tbRes;
+  const st = new Array(res.rows.length).fill(0);
+  for (let i = 0; i < k; i++) { const e = res.events[i]; st[e.customer - 1] = Math.max(st[e.customer - 1], STAGE[e.type]); }
+  res.rows.forEach((r, i) => {
+    COLUMNS.forEach((c, j) => {
+      const cell = tbTable.tBodies[0].rows[i].cells[j];
+      const show = st[i] >= REVEAL[c.key];
+      cell.textContent = show ? c.get(r) : '';
+      cell.classList.toggle('changed', show && tbPrevStages[i] < REVEAL[c.key]);
+    });
+  });
+  COLUMNS.forEach((c, j) => {
+    if (!c.total || j === 0) return;
+    const vis = res.rows.filter((r, i) => st[i] >= REVEAL[c.key]);
+    tbTable.tFoot.rows[0].cells[j].textContent = vis.length ? c.total(vis) : '';
+  });
+  tbPrevStages = st;
+  const done = k >= res.events.length;
+  const last = k ? res.events[k - 1] : null;
+  markCurrentRow(tbTable, last ? last.customer - 1 : null);
+  tbAnimation.anim.show(k);
+  $('#tb-explain').textContent = tbOverride || (last
+    ? explainEvent(last, res.rows, preferred) + (done ? ` The replay is complete: the run length is ${res.totals.run} minutes.` : '')
+    : 'Press "Next event" to process the first event, or "Next call" to fill one complete row of the simulation table.');
+  tbOverride = null;
+  $('#tb-next-event').disabled = done;
+  $('#tb-next-customer').disabled = done;
+  renderReplayChecks(done);
+}
+
+function renderReplayChecks(done) {
+  const m = multiServerMeasures(tbRes.totals, E(useTextbookDigits ? distPanel.get() : replayDists));
+  const P = TB.published;
+  const rows = [
+    ['Run length (min)', P.run, m.run, m.run === P.run],
+    ['Able utilization', fmt(P.ableUtil), fmt(m.ableUtil), fmt(m.ableUtil) === fmt(P.ableUtil)],
+    ['Baker utilization', fmt(P.bakerUtil), fmt(m.bakerUtil), fmt(m.bakerUtil) === fmt(P.bakerUtil)],
+    ['Callers who waited', `${P.waited} of ${P.calls}`, `${m.waited} of ${tbRes.totals.n}`, m.waited === P.waited && tbRes.totals.n === P.calls],
+    ['Average delay of all callers (min)', fmt(P.avgDelay), fmt(m.avgDelay), fmt(m.avgDelay) === fmt(P.avgDelay)],
+    ['Average delay of those who waited (min)', fmt(P.avgDelayWaiters), fmt(m.avgDelayWaiters), fmt(m.avgDelayWaiters) === fmt(P.avgDelayWaiters)]
+  ];
+  const verify = useTextbookDigits && preferred === 'Able';
+  $('#tb-verify-title').textContent = verify ? 'Verification against the published results' : 'Comparison with the published textbook results';
+  const lead = verify ? '' : `<p class="muted small">${useTextbookDigits
+    ? 'The published results were obtained with the Able-first rule, so they are shown for comparison only while the Baker-first rule is on.'
+    : 'These random digits differ from the textbook digits, so the results are expected to differ from the published values; they are shown side by side for comparison, not as a check.'}</p>`;
+  const check = (ok) => (!done ? '<span class="muted">complete the replay</span>'
+    : (verify ? (ok ? '<span class="check-ok">OK &#10003;</span>' : '<span class="check-bad">Different &#10007;</span>') : '<span class="muted">for comparison</span>'));
+  $('#tb-verify').innerHTML = `${lead}<div class="table-scroll"><table class="plain"><thead><tr><th scope="col" class="text">Quantity</th><th scope="col">Published value</th><th scope="col">This replay</th><th scope="col" class="text">Check</th></tr></thead><tbody>${rows.map(([l, p, c, ok]) => `<tr><td class="text">${l}</td><td>${p}</td><td>${done ? c : '<span class="muted">pending</span>'}</td><td class="text">${check(ok)}</td></tr>`).join('')}</tbody></table></div>`;
+  if (done) showResults($('#tb-results'), m, preferred);
+  else $('#tb-results').innerHTML = '<p class="muted">The measures appear when the replay reaches the end. Press "Run to end" to complete it, or continue step by step.</p>';
+}
+
+let tbPlayer = null;
+let replayDists = dists;
+rebuildReplay();
+tbPlayer = new Player({
+  total: tbRes.events.length,
+  getDelay: tbAnimation.delay,
+  onStep: (k) => { tbAnimation.anim.setDuration(tbAnimation.delay()); renderReplay(k); },
+  onState: (playing) => { $('#tb-run').textContent = playing ? 'Pause' : 'Run to end'; }
+});
+$('#tb-next-event').addEventListener('click', () => { tbPlayer.stop(); tbAnimation.anim.setDuration(500); tbPlayer.stepTo(tbPlayer.k + 1); });
+$('#tb-next-customer').addEventListener('click', () => {
+  tbPlayer.stop();
+  const next = tbPrevStages.findIndex((s) => s < 3) + 1;
+  if (!next) return;
+  const target = tbRes.events.findIndex((e) => e.type === 'departure' && e.customer === next) + 1;
+  tbOverride = ['arrival', 'start', 'departure'].map((type) => explainEvent({ type, customer: next }, tbRes.rows, preferred)).join(' ');
+  tbAnimation.anim.setDuration(500);
+  tbPlayer.stepTo(Math.max(target, tbPlayer.k));
+});
+$('#tb-run').addEventListener('click', () => { if (tbPlayer.playing) tbPlayer.stop(); else tbPlayer.play(); });
+$('#tb-reset').addEventListener('click', () => { tbPlayer.stop(); tbPrevStages = tbPrevStages.map(() => 0); tbPlayer.stepTo(0); });
+$('#tb-new-digits').addEventListener('click', () => {
+  tbSeedText = String(newSeed());
+  $('#tb-seed').value = tbSeedText;
+  replayDists = dists;
+  rebuildReplay();
+});
+function useReplaySeed() {
+  tbSeedText = $('#tb-seed').value.trim() || String(CONFIG.defaultSeed);
+  replayDists = dists;
+  rebuildReplay();
+}
+$('#tb-use-seed').addEventListener('click', useReplaySeed);
+$('#tb-seed').addEventListener('keydown', (e) => { if (e.key === 'Enter') useReplaySeed(); });
+$('#tb-csv').addEventListener('click', () => downloadCSV(useTextbookDigits ? 'call-center-textbook-26-calls.csv' : `call-center-replay-26-calls-seed-${tbSeedText}.csv`, CSV_HEADER, csvRows(tbRes.rows)));
+tbPlayer.stepTo(0);
 
 // ---------------------------------------------------------------------------
 // Mode 2: one run
@@ -280,7 +344,7 @@ function runOne() {
   runPlayer.stepTo(0);
   const m = multiServerMeasures(runResult.totals, E(dists));
   showResults($('#run-results'), m, preferred);
-  if (CONFIG.enableBakerFirstRule) renderComparison(seed, n);
+  renderComparison(seed, n);
   drawRunCharts();
 }
 
@@ -464,13 +528,16 @@ $('#runs-csv-all').addEventListener('click', () => {
 
 const started = { run: false, runs: false };
 const tabs = setupTabs($('#mode-tabs'), (mode) => {
+  currentMode = mode;
   if (tbPlayer) tbPlayer.stop();
   runPlayer.stop();
-  distPanel.setEditable(mode !== 'textbook');
+  // The textbook digits go with the textbook distributions; random digits allow editing.
+  distPanel.setEditable(mode !== 'textbook' || !useTextbookDigits);
+  applyDists(distPanel.get(), distPanel.ok(), false);
   if (mode === 'run' && !started.run) { started.run = true; runOne(); }
   if (mode === 'runs' && !started.runs) { started.runs = true; runMany(); }
 });
-tabs.select(TB.confirmed && !$('#tab-textbook').hidden ? 'textbook' : 'run');
+tabs.select('textbook');
 
 onThemeChange(() => { distPanel.redraw(); drawRunCharts(); drawRunsCharts(); });
 $('#dist-details').addEventListener('toggle', () => { if ($('#dist-details').open) distPanel.redraw(); });

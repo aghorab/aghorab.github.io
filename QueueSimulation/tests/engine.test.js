@@ -3,7 +3,7 @@
 
 import { createRng } from '../js/rng.js';
 import {
-  DISTRIBUTIONS, lookup, makeDistribution,
+  DISTRIBUTIONS, lookup, makeDistribution, generateDigitsForTimes,
   GROCERY_ARRIVAL, GROCERY_SERVICE, CALL_ARRIVAL, ABLE_SERVICE, BAKER_SERVICE
 } from '../js/distributions.js';
 import {
@@ -90,6 +90,12 @@ export function runAllTests(fixture, rowsFixture) {
     let ok = true;
     for (let i = 1; i < tb.customers; i++) if (lookup(tb.arrivalDigits[i], D.groceryArrival) !== tb.interarrivalTimes[i]) ok = false;
     g.check('each of the 19 textbook arrival digits maps to its textbook time', ok);
+    let genOk = true;
+    for (let seed = 1; seed <= 200; seed++) {
+      const digits = generateDigitsForTimes(tb.serviceTimes, D.groceryService, createRng(seed));
+      digits.forEach((d, i) => { if (d === null || d < 1 || d > 100 || lookup(d, D.groceryService) !== tb.serviceTimes[i]) genOk = false; });
+    }
+    g.check('generated service digits (200 seeds) always map to the published service times', genOk);
     groups.push(g);
   }
 

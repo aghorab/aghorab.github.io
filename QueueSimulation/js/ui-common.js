@@ -3,7 +3,7 @@
 // This module touches the DOM; the engines never do.
 
 import { CONFIG } from './config.js';
-import { makeDistribution, assignmentText, validateProbabilities } from './distributions.js';
+import { makeDistribution, assignmentText, validateDistribution } from './distributions.js';
 
 // ---------------------------------------------------------------------------
 // Small helpers
@@ -375,49 +375,67 @@ export function lineWithAverage(box, { labels, data, average, label, xTitle, yTi
  * Returns { get() -> { id: distribution }, ok() -> bool, setEditable(bool), reset() }.
  */
 export function createDistributionPanel(container, defs, onChange) {
-  const clone = (list) => list.map((d) => ({ ...d, def: { ...d.def, probs: d.def.probs.slice() } }));
+  const clone = (list) => list.map((d) => ({ ...d, def: { ...d.def, values: d.def.values.slice(), probs: d.def.probs.slice() } }));
   const original = clone(defs);
-  let edited = clone(defs);      // the student's probabilities, kept while the textbook mode is shown
+  let edited = clone(defs);      // the student's distributions, kept while a non-editable mode is shown
   let editable = false;
   let valid = true;
   const view = () => (editable && CONFIG.enableProbabilityEditing ? edited : original);
+  const num = (x) => (Number.isFinite(x) ? x : '');
 
   function build() {
     const allowEdit = editable && CONFIG.enableProbabilityEditing;
     const list = view();
     container.innerHTML = `
       <p class="muted small">${allowEdit
-        ? 'In this mode the probabilities can be edited to explore "what if" scenarios. Each table must sum to 1; the cumulative probabilities and random-digit assignments are recalculated automatically, and the new values apply from the next run.'
+        ? 'In this mode the distributions can be edited to explore "what if" scenarios: change a time or a probability, or add and remove rows. Times must be different whole numbers of at least 1 minute, and each table must sum to 1. The cumulative probabilities and random-digit assignments are recalculated automatically, and the new values apply from the next run.'
         : (CONFIG.enableProbabilityEditing
-          ? 'The textbook probabilities are used in this mode. They can be edited in the random and replication modes.'
-          : 'The textbook probabilities are used.')}</p>
+          ? 'The textbook distributions are used in this mode. They can be edited in the other modes.'
+          : 'The textbook distributions are used.')}</p>
       <div class="grid-halves">${list.map((d, idx) => {
         const dist = makeDistribution(d.def);
-        const ok = validateProbabilities(d.def.probs).ok;
+        const ok = validateDistribution(d.def.values, d.def.probs).ok;
         return `<section aria-labelledby="dist-h-${d.id}">
           <h3 id="dist-h-${d.id}">${esc(d.def.name)} (${d.def.digits}-digit random numbers)</h3>
           <div class="table-scroll"><table class="plain dist-table">
             <thead><tr><th scope="col">${esc(d.valueLabel)}</th><th scope="col">Probability</th><th scope="col">Cumulative probability</th><th scope="col">Random-digit assignment</th></tr></thead>
-            <tbody>${dist.rows.map((r, i) => `<tr><td>${r.value}</td><td>${allowEdit
-              ? `<label class="visually-hidden" for="p-${d.id}-${i}">Probability of ${r.value} minutes (${esc(d.def.name)})</label><input class="prob-input" id="p-${d.id}-${i}" type="number" min="0" max="1" step="0.005" value="${Number.isFinite(d.def.probs[i]) ? d.def.probs[i] : ''}" data-dist="${idx}" data-row="${i}">`
+            <tbody>${dist.rows.map((r, i) => `<tr><td>${allowEdit
+              ? `<label class="visually-hidden" for="v-${d.id}-${i}">Time in row ${i + 1} (${esc(d.def.name)})</label><input class="prob-input val-input" id="v-${d.id}-${i}" type="number" min="1" step="1" value="${num(d.def.values[i])}" data-dist="${idx}" data-row="${i}" data-kind="value">`
+              : r.value}</td><td>${allowEdit
+              ? `<label class="visually-hidden" for="p-${d.id}-${i}">Probability in row ${i + 1} (${esc(d.def.name)})</label><input class="prob-input" id="p-${d.id}-${i}" type="number" min="0" max="1" step="0.005" value="${num(d.def.probs[i])}" data-dist="${idx}" data-row="${i}" data-kind="prob">`
               : fmt(r.p, 3)}</td><td>${ok ? fmt(r.cum, 3) : '-'}</td><td class="mono">${ok ? assignmentText(r, dist) : '-'}</td></tr>`).join('')}</tbody>
             <tfoot><tr><th scope="row">Sum</th><td>${fmt(dist.sum, 3)}</td><td colspan="2" class="text">Expected value: <strong>${ok ? fmt(dist.expected) : '-'}</strong> minutes</td></tr></tfoot>
           </table></div>
+          ${allowEdit ? `<p class="control-group"><button type="button" class="dist-add" data-dist="${idx}">Add a row</button><button type="button" class="dist-remove" data-dist="${idx}" ${d.def.values.length <= 1 ? 'disabled' : ''}>Remove the last row</button></p>` : ''}
           <div class="error" id="dist-err-${d.id}" role="alert"></div>
           <div class="chart-box short" data-label="Probability distribution of ${esc(d.def.name)}" id="dist-chart-${d.id}"></div>
         </section>`;
       }).join('')}</div>
-      ${allowEdit ? '<p><button type="button" class="dist-reset">Restore the textbook probabilities</button></p>' : ''}`;
+      ${allowEdit ? '<p><button type="button" class="dist-reset">Restore the textbook distributions</button></p>' : ''}`;
     list.forEach((d) => drawDistChart(d));
     $$('input.prob-input', container).forEach((inp) => inp.addEventListener('change', onEdit));
+    $$('.dist-add', container).forEach((b) => b.addEventListener('click', () => {
+      const def = edited[Number(b.dataset.dist)].def;
+      const finite = def.values.filter(Number.isFinite);
+      def.values.push(finite.length ? Math.max(...finite) + 1 : 1);
+      def.probs.push(0);
+      rebuild(null, `.dist-add[data-dist="${b.dataset.dist}"]`);
+    }));
+    $$('.dist-remove', container).forEach((b) => b.addEventListener('click', () => {
+      const def = edited[Number(b.dataset.dist)].def;
+      if (def.values.length <= 1) return;
+      def.values.pop();
+      def.probs.pop();
+      rebuild(null, `.dist-add[data-dist="${b.dataset.dist}"]`);
+    }));
     const reset = $('.dist-reset', container);
-    if (reset) reset.addEventListener('click', () => { edited = clone(original); build(); notify(); });
+    if (reset) reset.addEventListener('click', () => { edited = clone(original); rebuild(null, '.dist-reset'); });
     checkAll();
   }
 
   function drawDistChart(d) {
     barChart($(`#dist-chart-${d.id}`, container), {
-      labels: d.def.values.map(String),
+      labels: d.def.values.map((v) => String(num(v))),
       datasets: [{ label: 'Probability', data: d.def.probs.map((p) => (Number.isFinite(p) ? p : 0)) }],
       xTitle: d.valueLabel,
       yTitle: 'Probability'
@@ -427,7 +445,7 @@ export function createDistributionPanel(container, defs, onChange) {
   function checkAll() {
     valid = true;
     view().forEach((d, idx) => {
-      const v = validateProbabilities(d.def.probs);
+      const v = validateDistribution(d.def.values, d.def.probs);
       const err = $(`#dist-err-${d.id}`, container);
       if (err) err.textContent = v.ok ? '' : v.message;
       $$(`input[data-dist="${idx}"]`, container).forEach((inp) => inp.setAttribute('aria-invalid', String(!v.ok)));
@@ -436,15 +454,21 @@ export function createDistributionPanel(container, defs, onChange) {
     return valid;
   }
 
+  /** Rebuilds the panel, then puts the focus back where the user was working. */
+  function rebuild(focusId, focusSelector) {
+    build();
+    const target = focusId ? document.getElementById(focusId) : (focusSelector ? $(focusSelector, container) : null);
+    if (target) target.focus();
+    notify();
+  }
+
   function onEdit(ev) {
     const inp = ev.target;
-    const id = inp.id;
-    const d = edited[Number(inp.dataset.dist)];
-    d.def.probs[Number(inp.dataset.row)] = inp.value === '' ? NaN : Number(inp.value);
-    build();      // recompute cumulative bounds, expected values and charts
-    const again = document.getElementById(id);
-    if (again) again.focus();
-    notify();
+    const def = edited[Number(inp.dataset.dist)].def;
+    const value = inp.value === '' ? NaN : Number(inp.value);
+    if (inp.dataset.kind === 'value') def.values[Number(inp.dataset.row)] = value;
+    else def.probs[Number(inp.dataset.row)] = value;
+    rebuild(inp.id);
   }
 
   function notify() { onChange(api.get(), valid); }

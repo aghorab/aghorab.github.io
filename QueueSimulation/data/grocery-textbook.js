@@ -13,10 +13,10 @@ export const GROCERY_TEXTBOOK = {
   // Service times, as published.
   serviceTimes: [4, 1, 4, 3, 2, 4, 5, 4, 5, 3, 3, 5, 4, 1, 5, 4, 3, 3, 2, 3],
 
-  // TODO (instructor): enter the two-digit service random digits from slide 8/14
-  // once confirmed. While this is null, the page shows "see slide" in that column
-  // and uses the published service times directly.
-  serviceDigits: null,
+  // The service random digits are generated automatically by the page: for each
+  // customer, a random two-digit value inside the random-digit interval of the
+  // published service time (see generateDigitsForTimes in distributions.js), so
+  // that the table always agrees with the published service times and totals.
 
   // Published totals used for the verification panel under the table.
   publishedTotals: { iat: 82, service: 68, wait: 56, system: 124, idle: 18, waited: 13, run: 86 },

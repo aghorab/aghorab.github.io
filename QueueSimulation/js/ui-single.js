@@ -2,8 +2,8 @@
 // All values shown come from the engine (single-server.js) and measures.js.
 
 import { CONFIG } from './config.js';
-import { formatDigits, deriveSeed, normalizeSeed } from './rng.js';
-import { GROCERY_ARRIVAL, GROCERY_SERVICE, DISTRIBUTIONS } from './distributions.js';
+import { formatDigits, deriveSeed, normalizeSeed, createRng } from './rng.js';
+import { GROCERY_ARRIVAL, GROCERY_SERVICE, DISTRIBUTIONS, generateDigitsForTimes } from './distributions.js';
 import { simulateSingleServer, simulateSingleServerSeeded } from './single-server.js';
 import {
   singleServerMeasures, dailyMeasures, singleServerKeyFindings, summarize,
@@ -27,18 +27,22 @@ let distsOk = true;
 const distPanel = createDistributionPanel($('#dist-panel'), [
   { id: 'arrival', def: GROCERY_ARRIVAL, valueLabel: 'Time between arrivals (min)' },
   { id: 'service', def: GROCERY_SERVICE, valueLabel: 'Service time (min)' }
-], (d, ok) => {
+], (d, ok) => applyDists(d, ok, true));
+
+/** Takes the distributions in effect; `edited` is true after a change by the user. */
+function applyDists(d, ok, edited) {
   dists = d;
   distsOk = ok;
-  $('#day-error').textContent = ok ? '' : 'The probabilities in the input distributions do not sum to 1. Correct them before running.';
-  $('#days-error').textContent = $('#day-error').textContent;
+  const msg = ok ? '' : 'The input distributions are not valid; see the messages in the distribution panel. Correct them before running.';
+  $('#day-error').textContent = msg;
+  $('#days-error').textContent = msg;
   ['#day-new', '#day-run', '#days-new', '#days-run'].forEach((s) => { $(s).disabled = !ok; });
-  if (ok) {
+  if (ok && edited) {
     const note = 'The input distributions have changed; run again to apply them.';
     if (dayResult) $('#day-status').textContent = note;
     if (daysResult) $('#days-status').textContent = note;
   }
-});
+}
 dists = distPanel.get();
 
 // ---------------------------------------------------------------------------
@@ -143,13 +147,24 @@ function showResults(container, m, sentence, opts) {
 // ---------------------------------------------------------------------------
 
 const TB = GROCERY_TEXTBOOK;
-const tbKnownDigits = Array.isArray(TB.serviceDigits);
-const tbResult = simulateSingleServer({
-  interarrival: TB.interarrivalTimes,
-  service: TB.serviceTimes,
-  arrivalDigits: TB.arrivalDigits,
-  serviceDigits: tbKnownDigits ? TB.serviceDigits : null
-});
+const tbKnownDigits = true;
+let tbSeed = CONFIG.defaultSeed;
+
+/**
+ * The textbook table with automatically generated service digits: each digit is
+ * drawn from the random-digit interval of the published service time, so the
+ * service times, and therefore every other column and total, stay as published.
+ */
+function buildTextbook(seed) {
+  const serviceDigits = generateDigitsForTimes(TB.serviceTimes, DISTRIBUTIONS.groceryService, createRng(seed));
+  return simulateSingleServer({
+    interarrival: TB.interarrivalTimes,
+    service: TB.serviceTimes,
+    arrivalDigits: TB.arrivalDigits,
+    serviceDigits
+  });
+}
+let tbResult = buildTextbook(tbSeed);
 const tbCols = columns({ serviceDigitsKnown: tbKnownDigits });
 // Which event reveals which cells of a row: the hand table is filled left to right.
 const REVEAL = {
@@ -165,9 +180,10 @@ const tbDelay = setupSpeed($('#tb-speed'), $('#tb-speed-out'));
 let tbStages = new Array(TB.customers).fill(0);
 
 renderTable(tbTable, tbCols, tbResult.rows, { footLabel: 'Totals' });
-$('#tb-digit-note').textContent = tbKnownDigits
-  ? ''
-  : 'The service random digits of this example are shown on slide 8/14 of the course slides; the table uses the published service times directly.';
+function digitNote() {
+  $('#tb-digit-note').textContent = `The service random digits were generated automatically (seed ${tbSeed}): each one is a random number inside the random-digit interval of the published service time, so the service times and totals stay as in the textbook. Press "New service digits" for another set.`;
+}
+digitNote();
 
 function stagesAfter(k) {
   const st = new Array(TB.customers).fill(0);
@@ -246,6 +262,12 @@ $('#tb-next-customer').addEventListener('click', () => {
   tbPlayer.stepTo(Math.max(target, tbPlayer.k));
 });
 $('#tb-run').addEventListener('click', () => { if (tbPlayer.playing) tbPlayer.stop(); else tbPlayer.play(); });
+$('#tb-new-digits').addEventListener('click', () => {
+  tbSeed = newSeed();
+  tbResult = buildTextbook(tbSeed);
+  digitNote();
+  tbRender(tbPlayer.k);
+});
 $('#tb-reset').addEventListener('click', () => { tbPlayer.stop(); tbStages = new Array(TB.customers).fill(0); tbPlayer.stepTo(0); });
 
 function renderVerification(done) {
@@ -281,7 +303,7 @@ function renderTextbookResults(done) {
 }
 
 $('#tb-csv').addEventListener('click', () => {
-  downloadCSV('grocery-textbook-20-customers.csv', CSV_HEADER, csvRows(tbResult.rows, false, tbKnownDigits));
+  downloadCSV(`grocery-textbook-20-customers-seed-${tbSeed}.csv`, CSV_HEADER, csvRows(tbResult.rows, false, tbKnownDigits));
 });
 
 tbRender(0);
@@ -490,6 +512,7 @@ setupTabs($('#mode-tabs'), (mode) => {
   tbPlayer.stop();
   dayPlayer.stop();
   distPanel.setEditable(mode !== 'textbook');
+  applyDists(distPanel.get(), distPanel.ok(), false);
   if (mode === 'day' && !started.day) { started.day = true; runDay(); }
   if (mode === 'days' && !started.days) { started.days = true; runDays(); }
 });

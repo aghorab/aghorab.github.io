@@ -52,6 +52,20 @@ export function lookup(digitValue, dist) {
   return dist.rows[dist.rows.length - 1].value;
 }
 
+/**
+ * Generates random digits that produce given times: for each time, a value drawn
+ * uniformly from that time's random-digit interval (lower to upper bound).
+ * Used to show service digits for the published textbook service times.
+ *   times: the times to reproduce; dist: their distribution; rng: from createRng(seed)
+ */
+export function generateDigitsForTimes(times, dist, rng) {
+  return times.map((t) => {
+    const row = dist.rows.find((r) => r.value === t);
+    if (!row || row.upper < row.lower) return null;
+    return row.lower + Math.floor(rng.next() * (row.upper - row.lower + 1));
+  });
+}
+
 /** Text of a random-digit assignment, for example "001 to 125" or "876 to 000". */
 export function assignmentText(row, dist) {
   const pad = (n) => String(n % dist.scale).padStart(dist.digits, '0');
@@ -71,6 +85,21 @@ export function validateProbabilities(probs) {
     return { ok: false, sum, message: `The probabilities sum to ${sum.toFixed(4)}; they must sum to 1.` };
   }
   return { ok: true, sum, message: '' };
+}
+
+/**
+ * Checks a whole distribution edited by a student: the times must be different
+ * whole numbers of at least 1 minute, and the probabilities must be valid.
+ */
+export function validateDistribution(values, probs) {
+  if (values.length === 0) return { ok: false, message: 'A distribution needs at least one row.' };
+  if (values.some((v) => !Number.isInteger(v) || v < 1)) {
+    return { ok: false, message: 'Each time must be a whole number of at least 1 minute.' };
+  }
+  if (new Set(values).size !== values.length) {
+    return { ok: false, message: 'Each time may appear only once in the table.' };
+  }
+  return validateProbabilities(probs);
 }
 
 // ---------------------------------------------------------------------------

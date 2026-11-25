@@ -28,32 +28,41 @@
 
   <main id="main" class="wrap">
     <h1>Able and Baker: a two-server call center</h1>
-    <p class="lead secondary">Two technical support staff answer calls. Able is more experienced and faster; Baker is newer and slower. If both are idle, Able takes the call; otherwise the call goes to whichever server is free first. If both are busy, the call waits in a single first-in, first-out queue.</p>
+    <p class="lead secondary">Two technical support staff answer calls. Able is more experienced and faster; Baker is newer and slower. If both are idle, Able takes the call (unless the Baker-first rule is on); otherwise the call goes to whichever server is free first. If both are busy, the call waits in a single first-in, first-out queue.</p>
 
     <details class="panel dist secondary" id="dist-details">
       <summary>Input distributions: probabilities, cumulative probabilities and random-digit assignments</summary>
       <div id="dist-panel"></div>
     </details>
 
-    <div class="panel no-print" id="rule-panel" hidden>
-      <div class="field">
-        <label for="rule">Server-selection rule when both servers are idle</label>
-        <select id="rule">
-          <option value="Able">Able first (textbook)</option>
-          <option value="Baker">Baker first</option>
-        </select>
+    <div class="panel no-print" id="rule-panel">
+      <div class="controls">
+        <button type="button" id="rule-toggle" aria-pressed="false" aria-describedby="rule-text">Baker-first rule: off</button>
+        <p id="rule-text" class="muted small" style="margin: 0; flex: 1 1 280px">When both servers are idle, Able takes the call (textbook rule). Turn the Baker-first rule on to send such calls to Baker instead.</p>
       </div>
     </div>
 
     <div class="tabs" role="tablist" aria-label="Simulation mode" id="mode-tabs">
-      <button type="button" role="tab" id="tab-textbook" data-mode="textbook" aria-controls="panel-textbook" aria-selected="false" tabindex="-1" hidden>Textbook replay (26 calls)</button>
-      <button type="button" role="tab" id="tab-run" data-mode="run" aria-controls="panel-run" aria-selected="true">One run (100 calls)</button>
+      <button type="button" role="tab" id="tab-textbook" data-mode="textbook" aria-controls="panel-textbook" aria-selected="true">Step-by-step replay (26 calls)</button>
+      <button type="button" role="tab" id="tab-run" data-mode="run" aria-controls="panel-run" aria-selected="false" tabindex="-1">One run (100 calls)</button>
       <button type="button" role="tab" id="tab-runs" data-mode="runs" aria-controls="panel-runs" aria-selected="false" tabindex="-1">Many runs (400 runs)</button>
     </div>
 
     <!-- Mode 1: textbook replay (only when the textbook data are confirmed) -->
-    <section id="panel-textbook" role="tabpanel" aria-labelledby="tab-textbook" hidden>
+    <section id="panel-textbook" role="tabpanel" aria-labelledby="tab-textbook">
       <div class="panel">
+        <p class="note" id="tb-source"></p>
+        <div class="controls" id="tb-seed-controls">
+          <div class="field">
+            <label for="tb-seed">Seed</label>
+            <input type="text" id="tb-seed" inputmode="numeric" autocomplete="off">
+          </div>
+          <div class="control-group">
+            <button type="button" id="tb-new-digits">New random digits</button>
+            <button type="button" id="tb-use-seed">Use this seed</button>
+          </div>
+        </div>
+        <p class="error" id="tb-error" role="alert"></p>
         <div class="controls">
           <div class="control-group">
             <button type="button" class="primary" id="tb-next-event">Next event</button>
@@ -75,7 +84,7 @@
         <p class="no-print"><button type="button" id="tb-csv">Download table as CSV</button></p>
       </div>
       <div class="panel">
-        <h2>Verification against the published results</h2>
+        <h2 id="tb-verify-title">Verification against the published results</h2>
         <div id="tb-verify"></div>
       </div>
       <div class="panel">
@@ -85,7 +94,7 @@
     </section>
 
     <!-- Mode 2: one run ---------------------------------------------------->
-    <section id="panel-run" role="tabpanel" aria-labelledby="tab-run">
+    <section id="panel-run" role="tabpanel" aria-labelledby="tab-run" hidden>
       <div class="panel">
         <div class="controls">
           <div class="field">
@@ -134,7 +143,7 @@
         <div id="run-results"></div>
       </div>
 
-      <div class="panel" id="compare-panel" hidden>
+      <div class="panel" id="compare-panel">
         <h2>Comparison of the two rules with the same seed</h2>
         <div id="compare"></div>
       </div>

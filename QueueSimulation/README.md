@@ -12,7 +12,7 @@ The full specification is in [`SPEC.md`](SPEC.md).
 | --- | --- |
 | `index.html` | Landing page and links |
 | `single-server.html` | Grocery Checkout: textbook replay, one day, fifty days |
-| `multi-server.html` | Able and Baker: one run, many runs (textbook replay once confirmed) |
+| `multi-server.html` | Able and Baker: step-by-step replay of 26 calls, one run, many runs |
 | `about.html` | Method, notation, glossary, sources, responsible use |
 | `tests/tests.html` | Automated verification tests |
 
@@ -48,8 +48,8 @@ export const CONFIG = {
 };
 ```
 
-- `enableBakerFirstRule`: when `true`, the two-server page shows a rule selector ("Able first (textbook)" or "Baker first") and a side-by-side comparison of both rules with the same seed. When `false`, the Baker-first rule cannot be reached from the interface.
-- `enableProbabilityEditing`: allows students to edit the probabilities in the random and replication modes.
+- `enableBakerFirstRule`: the initial state of the "Baker-first rule" toggle button on the two-server page. Students can switch the rule on and off with the button; when it is on, Baker takes a call that arrives while both servers are idle. A comparison of both rules with the same seed is always shown in the "One run" mode.
+- `enableProbabilityEditing`: allows students to edit the distributions (times, probabilities, and added or removed rows) in the modes that use random digits. The textbook replay of the Grocery Checkout always uses the textbook distributions.
 - `showFormulas`: shows the formula icons in the table headings and the formula column in the results.
 - `defaultSeed`: the seed used when a page opens.
 
@@ -57,8 +57,8 @@ Edit the file on GitHub, commit, and GitHub Pages publishes the change within a 
 
 ## Textbook data (`data/`)
 
-- `data/grocery-textbook.js`: the 20-customer Grocery Checkout run. The service random digits (slide 8/14) are `null` until confirmed; the page then shows "see slide" in that column. To add them, replace `null` with an array of 20 two-digit values (use `100` or `0` for `00`).
-- `data/callcenter-textbook.js`: the 26-call Able and Baker run. Enter the arrival digits (26 values, the first one `null`) and the service digits (26 values) from slides 84 to 112, then set `confirmed: true`. The "Textbook replay" tab then appears on the two-server page, and test 7 checks the published results (run length 62, Able 90%, Baker 69%, 9 of 26 waited, average delay 0.42, 1.22 for those who waited). If a check fails, the data or the distributions need correcting.
+- `data/grocery-textbook.js`: the 20-customer Grocery Checkout run. The service random digits are generated automatically by the page: each one is a random two-digit value inside the random-digit interval of the published service time, so the table always agrees with the published totals. The "New service digits" button draws another set.
+- `data/callcenter-textbook.js`: the 26-call Able and Baker run. Enter the arrival digits (26 values, the first one `null`) and the service digits (26 values) from slides 84 to 112, then set `confirmed: true`. Until then, the "Step-by-step replay (26 calls)" tab uses random digits generated from a seed, and shows the published results only for comparison. Once confirmed, the tab becomes "Textbook replay (26 calls)", the replay uses the textbook digits, and test 7 checks the published results (run length 62, Able 90%, Baker 69%, 9 of 26 waited, average delay 0.42, 1.22 for those who waited). If a check fails, the data or the distributions need correcting.
 
 The probability distributions of both examples are in `js/distributions.js`.
 
@@ -81,8 +81,6 @@ tests/                   Test runner, tests and workbook fixtures
 
 ## Open items for the instructor
 
-- Confirm the service random digits of the Grocery example (slide 8/14).
 - Enter and confirm the 26 call-center textbook rows (slides 84 to 112), then set `confirmed: true`.
 - Confirm the call-center distributions against slides 79 to 82.
-- Decide when to set `enableBakerFirstRule: true` (after the Quiz 1 due date).
 - Confirm whether the 80.5% on slide 119 refers to runs or to individual callers (the page shows both).
