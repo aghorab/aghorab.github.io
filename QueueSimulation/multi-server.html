@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Able and Baker | Queueing Simulation</title>
+  <meta name="description" content="Interactive two-server queue simulation (Able and Baker call center) using the simulation-table method of Chapter 3.">
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.js" integrity="sha384-zYPBGXwO4633CABX/5Spf6emCKUJCfoOkhOMYyxMsatqQZPnDblmmOewfjsIVWCM" crossorigin="anonymous" defer></script>
+  <script type="module" src="./js/ui-multi.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the main content</a>
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="brand" href="./index.html">Queueing Simulation</a>
+      <nav aria-label="Main">
+        <a href="./single-server.html">Single server</a>
+        <a href="./multi-server.html" aria-current="page">Two servers</a>
+        <a href="./about.html">About</a>
+      </nav>
+      <div class="header-tools">
+        <button type="button" id="presentation-toggle" aria-pressed="false">Presentation mode</button>
+        <button type="button" id="theme-toggle">Dark theme</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    <h1>Able and Baker: a two-server call center</h1>
+    <p class="lead secondary">Two technical support staff answer calls. Able is more experienced and faster; Baker is newer and slower. If both are idle, Able takes the call; otherwise the call goes to whichever server is free first. If both are busy, the call waits in a single first-in, first-out queue.</p>
+
+    <details class="panel dist secondary" id="dist-details">
+      <summary>Input distributions: probabilities, cumulative probabilities and random-digit assignments</summary>
+      <div id="dist-panel"></div>
+    </details>
+
+    <div class="panel no-print" id="rule-panel" hidden>
+      <div class="field">
+        <label for="rule">Server-selection rule when both servers are idle</label>
+        <select id="rule">
+          <option value="Able">Able first (textbook)</option>
+          <option value="Baker">Baker first</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Simulation mode" id="mode-tabs">
+      <button type="button" role="tab" id="tab-textbook" data-mode="textbook" aria-controls="panel-textbook" aria-selected="false" tabindex="-1" hidden>Textbook replay (26 calls)</button>
+      <button type="button" role="tab" id="tab-run" data-mode="run" aria-controls="panel-run" aria-selected="true">One run (100 calls)</button>
+      <button type="button" role="tab" id="tab-runs" data-mode="runs" aria-controls="panel-runs" aria-selected="false" tabindex="-1">Many runs (400 runs)</button>
+    </div>
+
+    <!-- Mode 1: textbook replay (only when the textbook data are confirmed) -->
+    <section id="panel-textbook" role="tabpanel" aria-labelledby="tab-textbook" hidden>
+      <div class="panel">
+        <div class="controls">
+          <div class="control-group">
+            <button type="button" class="primary" id="tb-next-event">Next event</button>
+            <button type="button" id="tb-next-customer">Next call</button>
+            <button type="button" id="tb-run">Run to end</button>
+            <button type="button" id="tb-reset">Reset</button>
+          </div>
+          <div class="speed">
+            <label for="tb-speed">Speed: <output id="tb-speed-out" for="tb-speed"></output></label>
+            <input type="range" id="tb-speed" min="1" max="10" step="1">
+          </div>
+        </div>
+        <div class="anim-panel" id="tb-anim"></div>
+        <p class="explain" id="tb-explain" aria-live="polite"></p>
+      </div>
+      <div class="panel">
+        <h2>Simulation table</h2>
+        <div class="table-scroll"><table class="sim" id="tb-table"></table></div>
+        <p class="no-print"><button type="button" id="tb-csv">Download table as CSV</button></p>
+      </div>
+      <div class="panel">
+        <h2>Verification against the published results</h2>
+        <div id="tb-verify"></div>
+      </div>
+      <div class="panel">
+        <h2>Results</h2>
+        <div id="tb-results"></div>
+      </div>
+    </section>
+
+    <!-- Mode 2: one run ---------------------------------------------------->
+    <section id="panel-run" role="tabpanel" aria-labelledby="tab-run">
+      <div class="panel">
+        <div class="controls">
+          <div class="field">
+            <label for="run-seed">Seed</label>
+            <input type="text" id="run-seed" inputmode="numeric" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="run-n">Calls (2 to 1000)</label>
+            <input type="number" id="run-n" min="2" max="1000" step="1" value="100">
+          </div>
+          <div class="control-group">
+            <button type="button" class="primary" id="run-new">Run new run</button>
+            <button type="button" id="run-run">Run with this seed</button>
+          </div>
+        </div>
+        <p class="error" id="run-error" role="alert"></p>
+        <p class="status-line" id="run-status" role="status"></p>
+      </div>
+
+      <div class="panel anim-section">
+        <h2>Animation of the run</h2>
+        <div class="controls">
+          <div class="control-group">
+            <button type="button" class="primary" id="run-play">Play</button>
+            <button type="button" id="run-step">Next event</button>
+            <button type="button" id="run-end">Show the end of the run</button>
+            <button type="button" id="run-anim-reset">Reset animation</button>
+          </div>
+          <div class="speed">
+            <label for="run-speed">Speed: <output id="run-speed-out" for="run-speed"></output></label>
+            <input type="range" id="run-speed" min="1" max="10" step="1">
+          </div>
+        </div>
+        <div class="anim-panel" id="run-anim"></div>
+        <p class="explain" id="run-explain" aria-live="polite"></p>
+      </div>
+
+      <div class="panel">
+        <h2>Simulation table</h2>
+        <div class="table-scroll tall"><table class="sim" id="run-table"></table></div>
+        <p class="no-print"><button type="button" id="run-csv">Download table as CSV</button></p>
+      </div>
+
+      <div class="panel">
+        <h2>Results</h2>
+        <div id="run-results"></div>
+      </div>
+
+      <div class="panel" id="compare-panel" hidden>
+        <h2>Comparison of the two rules with the same seed</h2>
+        <div id="compare"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Charts</h2>
+        <div class="grid-2">
+          <figure>
+            <figcaption>Frequency of caller delay</figcaption>
+            <div class="chart-box" id="run-chart-freq" data-label="Bar chart: number of callers in each delay interval"></div>
+          </figure>
+          <div id="run-freq-table"></div>
+        </div>
+        <figure style="margin-top: 24px">
+          <figcaption>Delay by caller</figcaption>
+          <div class="chart-box" id="run-chart-delay" data-label="Bar chart: delay of each caller"></div>
+        </figure>
+        <div class="grid-halves" style="margin-top: 24px">
+          <figure>
+            <figcaption>Service time: simulated vs theoretical (Able)</figcaption>
+            <div class="chart-box short" id="run-chart-able" data-label="Grouped bar chart: Able service times, simulated and theoretical"></div>
+          </figure>
+          <figure>
+            <figcaption>Service time: simulated vs theoretical (Baker)</figcaption>
+            <div class="chart-box short" id="run-chart-baker" data-label="Grouped bar chart: Baker service times, simulated and theoretical"></div>
+          </figure>
+        </div>
+        <figure style="margin-top: 24px">
+          <figcaption>Server timeline</figcaption>
+          <div id="run-gantt" class="table-scroll" style="border: none"></div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- Mode 3: many runs -------------------------------------------------->
+    <section id="panel-runs" role="tabpanel" aria-labelledby="tab-runs" hidden>
+      <div class="panel">
+        <div class="controls">
+          <div class="field">
+            <label for="runs-seed">Seed</label>
+            <input type="text" id="runs-seed" inputmode="numeric" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="runs-count">Runs (1 to 1000)</label>
+            <input type="number" id="runs-count" min="1" max="1000" step="1" value="400">
+          </div>
+          <div class="field">
+            <label for="runs-n">Calls per run (2 to 1000)</label>
+            <input type="number" id="runs-n" min="2" max="1000" step="1" value="100">
+          </div>
+          <div class="control-group">
+            <button type="button" class="primary" id="runs-new">Run new experiment</button>
+            <button type="button" id="runs-run">Run with this seed</button>
+          </div>
+        </div>
+        <p class="error" id="runs-error" role="alert"></p>
+        <p class="status-line" id="runs-status" role="status"></p>
+      </div>
+
+      <div class="panel">
+        <h2>Key findings</h2>
+        <div id="runs-findings"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Measures per run</h2>
+        <div class="table-scroll tall"><table class="sim summary" id="runs-table"></table></div>
+        <p class="no-print control-group">
+          <button type="button" id="runs-csv">Download this table as CSV</button>
+          <button type="button" id="runs-csv-all">Download all caller rows as CSV</button>
+        </p>
+      </div>
+
+      <div class="panel">
+        <h2>Charts</h2>
+        <div class="grid-2">
+          <figure>
+            <figcaption>Frequency of the average delay per run</figcaption>
+            <div class="chart-box" id="runs-chart-freq" data-label="Bar chart: number of runs in each interval of average delay"></div>
+          </figure>
+          <div id="runs-freq-table"></div>
+        </div>
+        <figure style="margin-top: 24px">
+          <figcaption>Average delay by run</figcaption>
+          <div class="chart-box" id="runs-chart-line" data-label="Line chart: average delay of each run with the overall average"></div>
+        </figure>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">Modeling and Simulation, Chapter 3 (Queueing Simulation). Based on Banks, Carson, Nelson and Nicol, <cite>Discrete-Event System Simulation</cite>, Example 2.2. <a href="./about.html">Method and sources</a>.</div>
+  </footer>
+</body>
+</html>

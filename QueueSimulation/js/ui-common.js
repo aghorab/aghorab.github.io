@@ -535,7 +535,7 @@ export class QueueAnimator {
     this.clock = svgEl('text', { x: 16, y: 30, class: 'clock' }, 'Clock: minute 0');
     s.appendChild(this.clock);
     s.appendChild(svgEl('text', { x: 16, y: this.H - 12, class: 'label' }, 'Arrivals'));
-    s.appendChild(svgEl('text', { x: 884, y: this.H - 12, class: 'label', 'text-anchor': 'end' }, 'Departures'));
+    s.appendChild(svgEl('text', { x: 884, y: 30, class: 'label', 'text-anchor': 'end' }, 'Departures'));
     s.appendChild(svgEl('rect', { x: 70, y: midY - 26, width: 520, height: 52, rx: 26, class: 'lane' }));
     s.appendChild(svgEl('text', { x: 330, y: midY - 34, class: 'label', 'text-anchor': 'middle' }, 'Queue (first in, first out)'));
     this.more = svgEl('text', { x: 80, y: midY + 44, class: 'more' }, '');
@@ -546,10 +546,10 @@ export class QueueAnimator {
     const n = this.servers.length;
     this.servers.forEach((name, i) => {
       const cy = n === 1 ? midY : (i === 0 ? midY - 62 : midY + 62);
-      const x = 640, w = 150, h = n === 1 ? 96 : 92;
+      const x = 630, w = 190, h = n === 1 ? 96 : 92;
       this.serverPos[name] = { x: x + w / 2 - 30, y: cy + 4 };
       const box = svgEl('rect', { x, y: cy - h / 2, width: w, height: h, rx: 10, class: 'server-box idle' });
-      const title = svgEl('text', { x: x + w - 10, y: cy - h / 2 + 22, class: 'server-name', 'text-anchor': 'end' }, name);
+      const title = svgEl('text', { x: x + 12, y: cy - h / 2 + 22, class: 'server-name' }, name);
       const status = svgEl('text', { x: x + w - 10, y: cy + h / 2 - 12, class: 'server-status idle', 'text-anchor': 'end' }, 'Idle');
       s.append(box, title, status);
       s.appendChild(svgEl('path', { d: `M590 ${midY} C 615 ${midY}, 615 ${cy}, ${x} ${cy}`, class: 'arrow' }));
@@ -560,7 +560,7 @@ export class QueueAnimator {
         const bx = x, by = cy + h / 2 + 6;
         s.appendChild(svgEl('rect', { x: bx, y: by, width: w, height: 10, class: 'util-bg' }));
         els.util = svgEl('rect', { x: bx, y: by, width: 0, height: 10, class: 'util-fill' });
-        els.utilText = svgEl('text', { x: bx - 6, y: by + 9, class: 'label', 'text-anchor': 'end', 'font-size': 12 }, 'Utilization 0%');
+        els.utilText = svgEl('text', { x: x + w - 10, y: cy - h / 2 + 21, class: 'label', 'text-anchor': 'end', 'font-size': 13 }, 'Utilization 0%');
         s.append(els.util, els.utilText);
       }
       this.serverEls[name] = els;
@@ -648,7 +648,7 @@ export class QueueAnimator {
           if (r.server === name && r.begin < clock) busyTime += Math.min(r.end, clock) - r.begin;
         }
         const u = clock > 0 ? busyTime / clock : 0;
-        els.util.setAttribute('width', String(150 * u));
+        els.util.setAttribute('width', String(190 * u));
         els.utilText.textContent = `Utilization ${Math.round(u * 100)}%`;
       }
     }

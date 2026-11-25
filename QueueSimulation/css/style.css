@@ -96,6 +96,9 @@
 
 * { box-sizing: border-box; }
 
+/* The hidden attribute always wins over display rules (for example on buttons). */
+[hidden] { display: none !important; }
+
 html { -webkit-text-size-adjust: 100%; }
 
 body {
