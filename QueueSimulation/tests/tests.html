@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Engine Tests | Queueing Simulation</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the test results</a>
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="brand" href="../index.html">Queueing Simulation</a>
+      <nav aria-label="Main">
+        <a href="../single-server.html">Single server</a>
+        <a href="../multi-server.html">Two servers</a>
+        <a href="../about.html">About</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main" class="wrap">
+    <h1>Verification tests</h1>
+    <p class="lead">These tests check the simulation engines against the textbook totals and the instructor's Excel workbook (SPEC Section 5.4). They run in this browser each time the page is opened.</p>
+    <p id="summary" class="test-summary" role="status">Running the tests&hellip;</p>
+    <div id="results"></div>
+  </main>
+  <script type="module">
+    import { runAllTests } from './engine.test.js';
+
+    const summary = document.getElementById('summary');
+    const out = document.getElementById('results');
+
+    async function loadJson(path) {
+      const res = await fetch(path);
+      if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
+      return res.json();
+    }
+
+    function esc(s) {
+      return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    }
+
+    try {
+      const [fixture, rows] = await Promise.all([
+        loadJson('./fixtures/grocery-workbook-fixture.json'),
+        loadJson('./fixtures/grocery-workbook-100-rows.json')
+      ]);
+      const t0 = performance.now();
+      const groups = runAllTests(fixture, rows);
+      const ms = Math.round(performance.now() - t0);
+      let passedGroups = 0, failedGroups = 0, skippedGroups = 0, checks = 0;
+      out.innerHTML = groups.map((g) => {
+        if (g.skipped) {
+          skippedGroups++;
+          return `<section class="test-group skipped"><h2><span class="badge badge-skip">Skipped</span> ${g.id}. ${esc(g.title)}</h2><p>${esc(g.skipped)}</p></section>`;
+        }
+        const failed = g.checks.filter((c) => !c.pass).length;
+        checks += g.checks.length;
+        failed ? failedGroups++ : passedGroups++;
+        const items = g.checks.map((c) => `<li class="${c.pass ? 'ok' : 'bad'}"><span class="badge ${c.pass ? 'badge-ok' : 'badge-bad'}">${c.pass ? 'Pass' : 'Fail'}</span> ${esc(c.name)}${c.pass || !c.detail ? '' : ` <span class="muted">(${esc(c.detail)})</span>`}</li>`).join('');
+        return `<section class="test-group ${failed ? 'failed' : 'passed'}"><h2><span class="badge ${failed ? 'badge-bad' : 'badge-ok'}">${failed ? 'Fail' : 'Pass'}</span> ${g.id}. ${esc(g.title)}</h2><ul>${items}</ul></section>`;
+      }).join('');
+      summary.textContent = `${passedGroups} test groups passed, ${failedGroups} failed, ${skippedGroups} skipped (${checks} checks, ${ms} ms).`;
+      summary.classList.add(failedGroups ? 'bad' : 'ok');
+      document.title = `${failedGroups ? 'FAIL' : 'PASS'} | Engine Tests`;
+    } catch (err) {
+      summary.textContent = `The tests could not run: ${err.message}. Open this page through a web server (see README.md), not as a local file.`;
+      summary.classList.add('bad');
+    }
+  </script>
+</body>
+</html>

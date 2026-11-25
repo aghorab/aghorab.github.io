@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Method and Sources | Queueing Simulation</title>
+  <meta name="description" content="The simulation-table method, random-digit assignment, notation, glossary and sources of the Queueing Simulation website.">
+  <link rel="stylesheet" href="./css/style.css">
+  <script type="module">
+    import { initChrome } from './js/ui-common.js';
+    initChrome();
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the main content</a>
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="brand" href="./index.html">Queueing Simulation</a>
+      <nav aria-label="Main">
+        <a href="./single-server.html">Single server</a>
+        <a href="./multi-server.html">Two servers</a>
+        <a href="./about.html" aria-current="page">About</a>
+      </nav>
+      <div class="header-tools">
+        <button type="button" id="presentation-toggle" aria-pressed="false">Presentation mode</button>
+        <button type="button" id="theme-toggle">Dark theme</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="wrap" style="max-width: 900px">
+    <h1>Method, notation and sources</h1>
+
+    <section class="panel">
+      <h2>The simulation-table method</h2>
+      <p>A queueing system is simulated by hand by filling a table with one row per customer. For each customer, random digits determine the time since the previous arrival and the service time. The remaining columns follow from simple rules: a customer begins service when the customer has arrived and the server is free, waits for the difference between the two times, and leaves when the service time has elapsed. The system starts empty and idle, and customer 1 arrives at time 0.</p>
+      <p>The totals of the columns give the performance measures, such as the average waiting time, the probability that a customer waits, and the proportion of time the server is busy. One short run is only one sample of a random process, so the measures change from run to run. Repeating the run many times (replications) shows how much they vary and gives a more reliable average.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Random-digit assignment</h2>
+      <p>Each possible time receives a range of random digits whose size is proportional to its probability. The ranges follow from the cumulative probabilities. For example, a service time of 3 minutes with probability 0.30 and cumulative probability 0.60 receives the two-digit random numbers 31 to 60. A random number of all zeros (<code>00</code> or <code>000</code>) stands for the top of the last range (100 or 1000).</p>
+      <p>On this website, random digits come from a seeded generator, so that the same seed always reproduces exactly the same digits and therefore the same simulation table. A class can share a seed to work on the same run.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Notation</h2>
+      <div class="table-scroll"><table class="plain wrap-cells">
+        <thead><tr><th scope="col" class="text">Symbol</th><th scope="col" class="text">Meaning</th></tr></thead>
+        <tbody>
+          <tr><td class="text">A(i)</td><td class="text">Time between the arrival of customer i - 1 and customer i</td></tr>
+          <tr><td class="text">S(i)</td><td class="text">Service time of customer i</td></tr>
+          <tr><td class="text">Arrival(i)</td><td class="text">Arrival(i - 1) + A(i), with Arrival(1) = 0</td></tr>
+          <tr><td class="text">Begin(i)</td><td class="text">max(Arrival(i), End(i - 1)): time service begins</td></tr>
+          <tr><td class="text">Wait(i)</td><td class="text">Begin(i) - Arrival(i): waiting time in the queue (called delay in the call center)</td></tr>
+          <tr><td class="text">End(i)</td><td class="text">Begin(i) + S(i): time service ends</td></tr>
+          <tr><td class="text">System(i)</td><td class="text">End(i) - Arrival(i): time the customer spends in the system</td></tr>
+          <tr><td class="text">Idle(i)</td><td class="text">Begin(i) - End(i - 1): idle time of the server before customer i</td></tr>
+          <tr><td class="text">E(A), E(S)</td><td class="text">Expected time between arrivals and expected service time: the sum of each value times its probability</td></tr>
+        </tbody>
+      </table></div>
+      <p class="small muted">In the call center, the server chosen is Able when both servers are idle (textbook rule); otherwise it is the server that becomes free first, and Begin(i) uses the time that server is available.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Glossary</h2>
+      <dl class="glossary">
+        <dt>Interarrival time</dt>
+        <dd>The time between two consecutive arrivals (time between arrivals, or time between calls).</dd>
+        <dt>Service time</dt>
+        <dd>The time a server needs to serve one customer.</dd>
+        <dt>Utilization</dt>
+        <dd>The proportion of the run during which a server is busy: total service time of that server divided by the length of the run.</dd>
+        <dt>FIFO</dt>
+        <dd>First in, first out: customers are served in the order in which they arrive.</dd>
+        <dt>Replication</dt>
+        <dd>One independent repetition of the whole simulation with new random digits, such as one day of the Grocery Checkout or one run of the call center.</dd>
+        <dt>Seed</dt>
+        <dd>The starting value of the random-number generator. The same seed reproduces the same random digits and therefore the same results.</dd>
+      </dl>
+    </section>
+
+    <section class="panel">
+      <h2>Sources</h2>
+      <ul>
+        <li>J. Banks, J. S. Carson II, B. L. Nelson and D. M. Nicol, <cite>Discrete-Event System Simulation</cite>, Pearson: Example 2.1 (single-channel queue, the Grocery Checkout) and Example 2.2 (the Able and Baker call center).</li>
+        <li>Modeling and Simulation course slides, Chapter 3 (Queueing Simulation).</li>
+        <li>Instructor's workbook <cite>Grocery_Checkout_Single_Server_Queue.xlsm</cite>, which the single-server page reproduces. The automated <a href="./tests/tests.html">verification tests</a> compare the engine with the textbook totals and with this workbook.</li>
+      </ul>
+    </section>
+
+    <section class="panel">
+      <h2>Responsible use</h2>
+      <p>Students may use this website to check their hand calculations and to explore how the inputs affect the results. Graded work must show the student's own calculations.</p>
+      <p class="small muted">The website runs entirely in the browser. It uses no server, no login, no cookies and no analytics, and it collects no data.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">Modeling and Simulation, Chapter 3 (Queueing Simulation).</div>
+  </footer>
+</body>
+</html>
