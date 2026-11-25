@@ -11,7 +11,7 @@ The full specification is in [`SPEC.md`](SPEC.md).
 | File | Content |
 | --- | --- |
 | `index.html` | Landing page and links |
-| `single-server.html` | Grocery Checkout: step by step (textbook example and experiments), one day, fifty days |
+| `single-server.html` | Grocery Checkout: step by step (textbook example and experiments), one day, fifty days, and a comparison of queue disciplines |
 | `multi-server.html` | Able and Baker: step-by-step replay of 26 calls, one run, many runs |
 | `about.html` | Method, notation, glossary, sources, responsible use |
 | `tests/tests.html` | Automated verification tests |
@@ -30,12 +30,16 @@ Then open <http://localhost:8000/QueueSimulation/>.
 
 ## Run the tests
 
-With the local server running, open <http://localhost:8000/QueueSimulation/tests/tests.html>. The tests also run on the live site at <https://aghorab.github.io/QueueSimulation/tests/tests.html>. The page lists the eleven test groups of SPEC Section 5.4 and marks each as Pass, Fail or Skipped. Group 7 (call center textbook run) is skipped until the call-center textbook data are confirmed (see below).
+With the local server running, open <http://localhost:8000/QueueSimulation/tests/tests.html>. The tests also run on the live site at <https://aghorab.github.io/QueueSimulation/tests/tests.html>. The page lists the eleven test groups of SPEC Section 5.4, plus a twelfth group for the queue disciplines, and marks each as Pass, Fail or Skipped. Group 7 (call center textbook run) is skipped until the call-center textbook data are confirmed (see below).
 
 The fixtures in `tests/fixtures/` are snapshots of the instructor's workbook of 25 November 2026:
 
 - `grocery-workbook-fixture.json`: digits, totals and measures of one 100-customer day and of all 50 days.
 - `grocery-workbook-100-rows.json`: the service begin times and waiting times of the 100-customer day, row by row (sheet "100 customer", columns G and H), used by the row-by-row check in test 11.
+
+## Queue disciplines (single server)
+
+A selector above the tabs sets the queue discipline of the first three tabs: FIFO (the default and the textbook rule), LIFO, SIRO (service in random order), SPT (shortest service time first) or LPT (longest service time first). Service is non-preemptive. Under a discipline other than FIFO, the simulation table gains an "Order of service" column, and the explanations say why each customer was chosen. The "Compare disciplines" tab runs the selected disciplines on exactly the same customers (the same random digits) for many days and compares the average, standard deviation and maximum of the waiting time, with charts and generated findings.
 
 ## Instructor switches (`js/config.js`)
 

@@ -1,23 +1,23 @@
 // Verification tests (SPEC Section 5.4). Runs in tests.html (browser) and can
 // also be imported by any ES-module runner: call runAllTests(fixture, rowsFixture).
 
-import { createRng } from '../js/rng.js?v=3';
+import { createRng } from '../js/rng.js?v=4';
 import {
   DISTRIBUTIONS, lookup, makeDistribution, generateDigitsForTimes,
   GROCERY_ARRIVAL, GROCERY_SERVICE, CALL_ARRIVAL, ABLE_SERVICE, BAKER_SERVICE
-} from '../js/distributions.js?v=3';
+} from '../js/distributions.js?v=4';
 import {
-  simulateSingleServer, simulateSingleServerFromDigits, simulateSingleServerSeeded
-} from '../js/single-server.js?v=3';
+  simulateSingleServer, simulateSingleServerFromDigits, simulateSingleServerSeeded, DISCIPLINES
+} from '../js/single-server.js?v=4';
 import {
   simulateMultiServer, simulateMultiServerSeeded, chooseServer, busyIntervals
-} from '../js/multi-server.js?v=3';
+} from '../js/multi-server.js?v=4';
 import {
   singleServerMeasures, dailyMeasures, singleServerKeyFindings, summarize,
   histogram, relativeFrequency, multiServerMeasures
-} from '../js/measures.js?v=3';
-import { GROCERY_TEXTBOOK } from '../data/grocery-textbook.js?v=3';
-import { CALLCENTER_TEXTBOOK } from '../data/callcenter-textbook.js?v=3';
+} from '../js/measures.js?v=4';
+import { GROCERY_TEXTBOOK } from '../data/grocery-textbook.js?v=4';
+import { CALLCENTER_TEXTBOOK } from '../data/callcenter-textbook.js?v=4';
 
 const D = DISTRIBUTIONS;
 const r2 = (x) => Math.round(x * 100) / 100;
@@ -262,6 +262,59 @@ export function runAllTests(fixture, rowsFixture) {
       g.check('histogram counts 0, 15, 21, 12, 1, 1, 0, 0, 0, 0, 0', sameArray(hd.counts, s.histogram.counts) && sameArray(hd.counts, [0, 15, 21, 12, 1, 1, 0, 0, 0, 0, 0]), hd.counts.join(', '));
       g.check('histogram bin labels equal the workbook', sameArray(hd.labels, s.histogram.bins), hd.labels.join(' | '));
     }
+    groups.push(g);
+  }
+
+  // 12. Queue disciplines (single server) ----------------------------------
+  {
+    const g = group(12, 'Queue disciplines (single server)');
+    // Hand-built case: arrivals at 0, 1, 2, 3 with service times 5, 3, 1, 2.
+    const hand = { interarrival: [null, 1, 1, 1], service: [5, 3, 1, 2] };
+    const expected = {
+      FIFO: { order: [1, 2, 3, 4], begin: [0, 5, 8, 9] },
+      LIFO: { order: [1, 4, 3, 2], begin: [0, 8, 7, 5] },
+      SPT: { order: [1, 3, 4, 2], begin: [0, 8, 5, 6] },
+      LPT: { order: [1, 2, 4, 3], begin: [0, 5, 10, 8] }
+    };
+    for (const [id, e] of Object.entries(expected)) {
+      const r = simulateSingleServer({ ...hand, discipline: id });
+      g.check(`hand case, ${id}: service order ${e.order.join(', ')}`, sameArray(r.order, e.order), r.order.join(', '));
+      g.check(`hand case, ${id}: begin times ${e.begin.join(', ')}`, sameArray(r.rows.map((x) => x.begin), e.begin), r.rows.map((x) => x.begin).join(', '));
+    }
+    const fifo = simulateSingleServer({ ...hand });
+    g.check('FIFO is the default discipline', sameArray(fifo.order, [1, 2, 3, 4]));
+
+    // Properties on 300 seeds with the textbook distributions (same digits for every discipline).
+    let sameWork = true, sptBest = true, valid = true, siroRepro = true;
+    const meanWait = {}, meanMax = {};
+    for (const d of DISCIPLINES) { meanWait[d.id] = 0; meanMax[d.id] = 0; }
+    for (let seed = 1; seed <= 300; seed++) {
+      const runs = {};
+      for (const d of DISCIPLINES) {
+        runs[d.id] = simulateSingleServerSeeded({ seed, n: 100, arrivalDist: D.groceryArrival, serviceDist: D.groceryService, discipline: d.id, withEvents: false });
+        const r = runs[d.id];
+        const served = new Set(r.order);
+        if (served.size !== 100 || r.rows.some((x) => x.begin < x.arrival || x.wait < 0 || x.idle < 0)) valid = false;
+        const byStart = r.rows.slice().sort((x, y) => x.begin - y.begin);
+        for (let k = 1; k < byStart.length; k++) if (byStart[k].begin < byStart[k - 1].end) valid = false;
+        if (r.totals.service + r.totals.idle !== r.totals.run) valid = false;
+      }
+      for (const d of DISCIPLINES) if (runs[d.id].totals.run !== runs.FIFO.totals.run || runs[d.id].totals.idle !== runs.FIFO.totals.idle) sameWork = false;
+      for (const d of DISCIPLINES) { meanWait[d.id] += runs[d.id].totals.wait / 100 / 300; meanMax[d.id] += runs[d.id].totals.maxWait / 300; }
+      if (runs.SPT.totals.wait > runs.FIFO.totals.wait || runs.LPT.totals.wait < runs.FIFO.totals.wait) sptBest = false;
+      const again = simulateSingleServerSeeded({ seed, n: 100, arrivalDist: D.groceryArrival, serviceDist: D.groceryService, discipline: 'SIRO', withEvents: false });
+      if (!sameArray(again.order, runs.SIRO.order)) siroRepro = false;
+    }
+    g.check('every discipline serves each customer once, never before arrival, with no overlap', valid);
+    g.check('run time and idle time are the same for every discipline (the server never idles while customers wait)', sameWork);
+    // Disciplines that ignore service times have the same expected waiting time.
+    g.check('FIFO, LIFO and SIRO: mean of the average waits within 0.05 minutes of each other (300 days)',
+      Math.abs(meanWait.LIFO - meanWait.FIFO) < 0.05 && Math.abs(meanWait.SIRO - meanWait.FIFO) < 0.05,
+      `FIFO ${meanWait.FIFO.toFixed(3)}, LIFO ${meanWait.LIFO.toFixed(3)}, SIRO ${meanWait.SIRO.toFixed(3)}`);
+    g.check('FIFO has the smallest mean maximum wait (300 days)',
+      DISCIPLINES.every((d) => meanMax.FIFO <= meanMax[d.id]), DISCIPLINES.map((d) => `${d.id} ${meanMax[d.id].toFixed(2)}`).join(', '));
+    g.check('SPT never waits longer in total than FIFO, and LPT never shorter', sptBest);
+    g.check('SIRO is reproducible from the seed', siroRepro);
     groups.push(g);
   }
 

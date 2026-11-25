@@ -2,8 +2,8 @@
 // charts, distribution panel and the SVG queue animation.
 // This module touches the DOM; the engines never do.
 
-import { CONFIG } from './config.js?v=3';
-import { makeDistribution, assignmentText, validateDistribution } from './distributions.js?v=3';
+import { CONFIG } from './config.js?v=4';
+import { makeDistribution, assignmentText, validateDistribution } from './distributions.js?v=4';
 
 // ---------------------------------------------------------------------------
 // Small helpers
@@ -297,7 +297,7 @@ export function drawChart(box, build) {
   canvas.setAttribute('aria-label', box.dataset.label || 'Chart');
   box.appendChild(canvas);
   const colors = {
-    c1: cssVar('--chart-1'), c2: cssVar('--chart-2'), c3: cssVar('--chart-3'),
+    c1: cssVar('--chart-1'), c2: cssVar('--chart-2'), c3: cssVar('--chart-3'), c4: cssVar('--chart-4'), c5: cssVar('--chart-5'),
     text: cssVar('--text'), muted: cssVar('--muted'), grid: cssVar('--border')
   };
   const cfg = build(colors);
@@ -327,7 +327,7 @@ export function barChart(box, { labels, datasets, xTitle, yTitle, yMax = undefin
       datasets: datasets.map((d, i) => ({
         label: d.label,
         data: d.data,
-        backgroundColor: [c.c1, c.c2, c.c3][i % 3],
+        backgroundColor: [c.c1, c.c2, c.c3, c.c4, c.c5][i % 5],
         borderWidth: 0,
         maxBarThickness: 48
       }))
@@ -642,7 +642,8 @@ export class QueueAnimator {
     s.appendChild(svgEl('text', { x: 16, y: this.H - 12, class: 'label' }, 'Arrivals'));
     s.appendChild(svgEl('text', { x: 884, y: 30, class: 'label', 'text-anchor': 'end' }, 'Departures'));
     s.appendChild(svgEl('rect', { x: 70, y: midY - 26, width: 520, height: 52, rx: 26, class: 'lane' }));
-    s.appendChild(svgEl('text', { x: 330, y: midY - 34, class: 'label', 'text-anchor': 'middle' }, 'Queue (first in, first out)'));
+    this.queueLabel = svgEl('text', { x: 330, y: midY - 34, class: 'label', 'text-anchor': 'middle' }, 'Queue (first in, first out)');
+    s.appendChild(this.queueLabel);
     this.more = svgEl('text', { x: 80, y: midY + 44, class: 'more' }, '');
     s.appendChild(this.more);
 
@@ -778,6 +779,11 @@ export class QueueAnimator {
       }
     }
     return { clock, queue, inService };
+  }
+
+  /** Changes the caption above the waiting line, for example to name the queue discipline. */
+  setQueueLabel(text) {
+    this.queueLabel.textContent = text;
   }
 
   /** Sets how long a move takes, so that fast playback stays readable. */
