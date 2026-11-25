@@ -193,6 +193,7 @@ h3 { font-size: 1.1rem; margin: 16px 0 8px; }
   white-space: nowrap;
 }
 .small { font-size: 0.875rem; }
+cite { overflow-wrap: anywhere; }
 code, .mono { font-family: var(--mono); font-size: 0.92em; }
 
 /* Buttons and inputs -------------------------------------------------- */
@@ -400,6 +401,7 @@ td.changed { background: var(--changed) !important; animation: flash 1.2s ease-o
 td.pending { color: var(--muted); }
 
 table.plain { width: auto; min-width: 280px; }
+table.wrap-cells td, table.wrap-cells th { white-space: normal; }
 table.measures td.text { white-space: normal; }
 table.measures td.formula { white-space: normal; color: var(--muted); text-align: left; font-size: 0.88rem; }
 table.measures td.value { font-weight: 700; }

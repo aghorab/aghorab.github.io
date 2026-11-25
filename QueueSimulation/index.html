@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Queueing Simulation | Modeling and Simulation, Chapter 3</title>
+  <meta name="description" content="Interactive teaching website for the simulation-table method: a single-server and a two-server queue simulated by hand.">
+  <link rel="stylesheet" href="./css/style.css">
+  <script type="module">
+    import { initChrome } from './js/ui-common.js';
+    initChrome();
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the main content</a>
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="brand" href="./index.html" aria-current="page">Queueing Simulation</a>
+      <nav aria-label="Main">
+        <a href="./single-server.html">Single server</a>
+        <a href="./multi-server.html">Two servers</a>
+        <a href="./about.html">About</a>
+      </nav>
+      <div class="header-tools">
+        <button type="button" id="presentation-toggle" aria-pressed="false">Presentation mode</button>
+        <button type="button" id="theme-toggle">Dark theme</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    <h1>Queueing Simulation</h1>
+    <p class="muted"><strong>Modeling and Simulation, Chapter 3</strong></p>
+    <p class="lead">A queueing system is a system in which customers arrive, wait in a line when every server is busy, receive service, and leave. Simulating it by hand with random digits and a simulation table shows how waiting times and server utilization arise from random arrivals and random service times.</p>
+
+    <section class="panel diagram" aria-labelledby="diagram-title">
+      <h2 id="diagram-title">The parts of a queueing system</h2>
+      <svg viewBox="0 0 900 220" role="img" aria-labelledby="diagram-desc">
+        <desc id="diagram-desc">Diagram: customers leave the calling population, arrive, wait in the queue, are served by the server or servers, and depart.</desc>
+        <defs>
+          <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" class="arrowhead"/>
+          </marker>
+        </defs>
+        <rect x="10" y="60" width="150" height="100" rx="12" class="box"/>
+        <text x="85" y="102" text-anchor="middle" font-weight="700">Calling</text>
+        <text x="85" y="124" text-anchor="middle" font-weight="700">population</text>
+        <path d="M160 110 L 250 110" class="arrow" marker-end="url(#head)"/>
+        <text x="205" y="96" text-anchor="middle">Arrivals</text>
+        <rect x="255" y="80" width="300" height="60" rx="30" class="box"/>
+        <circle cx="300" cy="110" r="16" class="dot"/>
+        <circle cx="345" cy="110" r="16" class="dot"/>
+        <circle cx="390" cy="110" r="16" class="dot"/>
+        <circle cx="435" cy="110" r="16" class="dot"/>
+        <text x="405" y="168" text-anchor="middle">Queue (waiting line)</text>
+        <path d="M555 110 C 590 110, 590 60, 625 60" class="arrow" marker-end="url(#head)"/>
+        <path d="M555 110 C 590 110, 590 160, 625 160" class="arrow" marker-end="url(#head)"/>
+        <rect x="630" y="30" width="120" height="60" rx="10" class="srv"/>
+        <text x="690" y="66" text-anchor="middle" font-weight="700">Server 1</text>
+        <rect x="630" y="130" width="120" height="60" rx="10" class="srv"/>
+        <text x="690" y="166" text-anchor="middle" font-weight="700">Server 2</text>
+        <text x="690" y="118" text-anchor="middle" font-size="13">(one or more servers)</text>
+        <path d="M750 60 C 790 60, 790 110, 880 110" class="arrow" marker-end="url(#head)"/>
+        <path d="M750 160 C 790 160, 790 110, 880 110" class="arrow"/>
+        <text x="830" y="96" text-anchor="middle">Departures</text>
+      </svg>
+    </section>
+
+    <div class="cards">
+      <article class="card">
+        <h2>Grocery Checkout</h2>
+        <p class="muted">Single server. Replay the 20-customer textbook table step by step, simulate one day of 100 customers, and repeat the day 50 times to see how much the results vary.</p>
+        <a class="button primary" href="./single-server.html">Open the single-server simulation</a>
+      </article>
+      <article class="card">
+        <h2>Able and Baker call center</h2>
+        <p class="muted">Two servers with different speeds and a server-selection rule. Simulate one run of 100 calls and 400 runs to compare the utilization of the two servers and the delay of the callers.</p>
+        <a class="button primary" href="./multi-server.html">Open the two-server simulation</a>
+      </article>
+    </div>
+
+    <p><a href="./about.html">Method, notation, glossary and sources</a></p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">Modeling and Simulation, Chapter 3 (Queueing Simulation). Everything runs in this browser; no data are collected.</div>
+  </footer>
+</body>
+</html>
