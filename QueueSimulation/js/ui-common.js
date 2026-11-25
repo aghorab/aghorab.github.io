@@ -375,28 +375,85 @@ export function lineWithAverage(box, { labels, data, average, label, xTitle, yTi
  * Returns { get() -> { id: distribution }, ok() -> bool, setEditable(bool), reset() }.
  */
 export function createDistributionPanel(container, defs, onChange) {
-  const clone = (list) => list.map((d) => ({ ...d, def: { ...d.def, values: d.def.values.slice(), probs: d.def.probs.slice() } }));
+  const clone = (list) => list.map((d) => ({
+    ...d,
+    preset: d.preset || 'textbook',
+    uMin: d.uMin ?? Math.min(...d.def.values),
+    uMax: d.uMax ?? Math.max(...d.def.values),
+    constant: d.constant ?? d.def.values[0],
+    def: { ...d.def, values: d.def.values.slice(), probs: d.def.probs.slice() }
+  }));
   const original = clone(defs);
   let edited = clone(defs);      // the student's distributions, kept while a non-editable mode is shown
   let editable = false;
   let valid = true;
   const view = () => (editable && CONFIG.enableProbabilityEditing ? edited : original);
   const num = (x) => (Number.isFinite(x) ? x : '');
+  const PRESETS = [
+    ['textbook', 'Textbook distribution (slides)'],
+    ['uniform', 'Discrete uniform (equal probabilities)'],
+    ['constant', 'Constant time'],
+    ['custom', 'Custom (enter the table manually)']
+  ];
+
+  /** Fills the table of distribution `d` from its chosen type. */
+  function applyPreset(d, idx) {
+    if (d.preset === 'textbook') {
+      d.def.values = original[idx].def.values.slice();
+      d.def.probs = original[idx].def.probs.slice();
+    } else if (d.preset === 'uniform') {
+      const a = d.uMin, b = d.uMax;
+      if (Number.isInteger(a) && Number.isInteger(b) && a >= 1 && b >= a && b - a < 50) {
+        const k = b - a + 1;
+        d.def.values = Array.from({ length: k }, (_, i) => a + i);
+        d.def.probs = d.def.values.map(() => 1 / k);
+      }
+    } else if (d.preset === 'constant') {
+      d.def.values = [d.constant];
+      d.def.probs = [1];
+    }
+  }
+
+  function presetError(d) {
+    if (d.preset === 'uniform') {
+      const a = d.uMin, b = d.uMax;
+      if (!Number.isInteger(a) || !Number.isInteger(b) || a < 1 || b < a) return 'For a discrete uniform distribution, enter whole numbers with 1 ≤ minimum ≤ maximum.';
+      if (b - a >= 50) return 'For a discrete uniform distribution, use at most 50 different times.';
+    }
+    if (d.preset === 'constant' && (!Number.isInteger(d.constant) || d.constant < 1)) return 'The constant time must be a whole number of at least 1 minute.';
+    return '';
+  }
+
+  function presetControls(d, idx) {
+    const id = `${d.id}`;
+    let extra = '';
+    if (d.preset === 'uniform') {
+      extra = `<div class="field"><label for="umin-${id}">Minimum (min)</label><input type="number" id="umin-${id}" class="preset-num" data-dist="${idx}" data-key="uMin" min="1" step="1" value="${num(d.uMin)}"></div>
+        <div class="field"><label for="umax-${id}">Maximum (min)</label><input type="number" id="umax-${id}" class="preset-num" data-dist="${idx}" data-key="uMax" min="1" step="1" value="${num(d.uMax)}"></div>`;
+    } else if (d.preset === 'constant') {
+      extra = `<div class="field"><label for="const-${id}">Time (min)</label><input type="number" id="const-${id}" class="preset-num" data-dist="${idx}" data-key="constant" min="1" step="1" value="${num(d.constant)}"></div>`;
+    }
+    return `<div class="controls" style="margin-bottom: 8px">
+      <div class="field"><label for="preset-${id}">Distribution</label>
+        <select id="preset-${id}" class="preset-select" data-dist="${idx}">${PRESETS.map(([v, l]) => `<option value="${v}" ${d.preset === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>
+      </div>${extra}</div>`;
+  }
 
   function build() {
     const allowEdit = editable && CONFIG.enableProbabilityEditing;
     const list = view();
     container.innerHTML = `
       <p class="muted small">${allowEdit
-        ? 'In this mode the distributions can be edited to explore "what if" scenarios: change a time or a probability, or add and remove rows. Times must be different whole numbers of at least 1 minute, and each table must sum to 1. The cumulative probabilities and random-digit assignments are recalculated automatically, and the new values apply from the next run.'
+        ? 'Choose a distribution for each input: the textbook distribution of the slides, a discrete uniform distribution, a constant time, or a custom table entered manually (change a time or a probability, or add and remove rows; editing the table switches to "Custom"). Times must be different whole numbers of at least 1 minute, and each table must sum to 1. The cumulative probabilities and random-digit assignments are recalculated automatically, and the new distributions apply from the next run.'
         : (CONFIG.enableProbabilityEditing
           ? 'The textbook distributions are used in this mode. They can be edited in the other modes.'
           : 'The textbook distributions are used.')}</p>
       <div class="grid-halves">${list.map((d, idx) => {
         const dist = makeDistribution(d.def);
-        const ok = validateDistribution(d.def.values, d.def.probs).ok;
+        const ok = !presetError(d) && validateDistribution(d.def.values, d.def.probs).ok;
         return `<section aria-labelledby="dist-h-${d.id}">
           <h3 id="dist-h-${d.id}">${esc(d.def.name)} (${d.def.digits}-digit random numbers)</h3>
+          ${allowEdit ? presetControls(d, idx) : ''}
           <div class="table-scroll"><table class="plain dist-table">
             <thead><tr><th scope="col">${esc(d.valueLabel)}</th><th scope="col">Probability</th><th scope="col">Cumulative probability</th><th scope="col">Random-digit assignment</th></tr></thead>
             <tbody>${dist.rows.map((r, i) => `<tr><td>${allowEdit
@@ -414,18 +471,34 @@ export function createDistributionPanel(container, defs, onChange) {
       ${allowEdit ? '<p><button type="button" class="dist-reset">Restore the textbook distributions</button></p>' : ''}`;
     list.forEach((d) => drawDistChart(d));
     $$('input.prob-input', container).forEach((inp) => inp.addEventListener('change', onEdit));
+    $$('select.preset-select', container).forEach((sel) => sel.addEventListener('change', () => {
+      const idx = Number(sel.dataset.dist);
+      const d = edited[idx];
+      d.preset = sel.value;
+      applyPreset(d, idx);
+      rebuild(sel.id);
+    }));
+    $$('input.preset-num', container).forEach((inp) => inp.addEventListener('change', () => {
+      const idx = Number(inp.dataset.dist);
+      const d = edited[idx];
+      d[inp.dataset.key] = inp.value === '' ? NaN : Number(inp.value);
+      applyPreset(d, idx);
+      rebuild(inp.id);
+    }));
     $$('.dist-add', container).forEach((b) => b.addEventListener('click', () => {
-      const def = edited[Number(b.dataset.dist)].def;
-      const finite = def.values.filter(Number.isFinite);
-      def.values.push(finite.length ? Math.max(...finite) + 1 : 1);
-      def.probs.push(0);
+      const d = edited[Number(b.dataset.dist)];
+      const finite = d.def.values.filter(Number.isFinite);
+      d.preset = 'custom';
+      d.def.values.push(finite.length ? Math.max(...finite) + 1 : 1);
+      d.def.probs.push(0);
       rebuild(null, `.dist-add[data-dist="${b.dataset.dist}"]`);
     }));
     $$('.dist-remove', container).forEach((b) => b.addEventListener('click', () => {
-      const def = edited[Number(b.dataset.dist)].def;
-      if (def.values.length <= 1) return;
-      def.values.pop();
-      def.probs.pop();
+      const d = edited[Number(b.dataset.dist)];
+      if (d.def.values.length <= 1) return;
+      d.preset = 'custom';
+      d.def.values.pop();
+      d.def.probs.pop();
       rebuild(null, `.dist-add[data-dist="${b.dataset.dist}"]`);
     }));
     const reset = $('.dist-reset', container);
@@ -445,7 +518,8 @@ export function createDistributionPanel(container, defs, onChange) {
   function checkAll() {
     valid = true;
     view().forEach((d, idx) => {
-      const v = validateDistribution(d.def.values, d.def.probs);
+      const pe = presetError(d);
+      const v = pe ? { ok: false, message: pe } : validateDistribution(d.def.values, d.def.probs);
       const err = $(`#dist-err-${d.id}`, container);
       if (err) err.textContent = v.ok ? '' : v.message;
       $$(`input[data-dist="${idx}"]`, container).forEach((inp) => inp.setAttribute('aria-invalid', String(!v.ok)));
@@ -464,10 +538,11 @@ export function createDistributionPanel(container, defs, onChange) {
 
   function onEdit(ev) {
     const inp = ev.target;
-    const def = edited[Number(inp.dataset.dist)].def;
+    const d = edited[Number(inp.dataset.dist)];
     const value = inp.value === '' ? NaN : Number(inp.value);
-    if (inp.dataset.kind === 'value') def.values[Number(inp.dataset.row)] = value;
-    else def.probs[Number(inp.dataset.row)] = value;
+    d.preset = 'custom';   // a manual change makes the table a custom distribution
+    if (inp.dataset.kind === 'value') d.def.values[Number(inp.dataset.row)] = value;
+    else d.def.probs[Number(inp.dataset.row)] = value;
     rebuild(inp.id);
   }
 
@@ -484,6 +559,12 @@ export function createDistributionPanel(container, defs, onChange) {
       if (on === editable) return;
       editable = on;
       build();
+    },
+    /** Restores the textbook distributions. */
+    reset() {
+      edited = clone(original);
+      build();
+      notify();
     },
     redraw: () => view().forEach((d) => drawDistChart(d))
   };

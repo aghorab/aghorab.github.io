@@ -35,14 +35,16 @@ function applyDists(d, ok, edited) {
   distsOk = ok;
   const msg = ok ? '' : 'The input distributions are not valid; see the messages in the distribution panel. Correct them before running.';
   $('#day-error').textContent = msg;
+  $('#tb-error').textContent = msg;
   $('#days-error').textContent = msg;
-  ['#day-new', '#day-run', '#days-new', '#days-run'].forEach((s) => { $(s).disabled = !ok; });
+  ['#day-new', '#day-run', '#days-new', '#days-run', '#tb-new-digits'].forEach((s) => { $(s).disabled = !ok; });
   if (ok && edited) {
     const note = 'The input distributions have changed; run again to apply them.';
     if (dayResult) $('#day-status').textContent = note;
     if (daysResult) $('#days-status').textContent = note;
   }
 }
+distPanel.setEditable(true);   // the distributions can be chosen in every mode
 dists = distPanel.get();
 
 // ---------------------------------------------------------------------------
@@ -143,20 +145,24 @@ function showResults(container, m, sentence, opts) {
 }
 
 // ---------------------------------------------------------------------------
-// Mode 1: textbook replay
+// Mode 1: step by step (20 customers)
+// The page opens with the textbook example of the slides. "New random digits"
+// starts an experiment: new arrival and service digits are drawn and converted
+// with the distributions in the input panel. "Reset to textbook example"
+// restores the textbook digits, times and distributions.
 // ---------------------------------------------------------------------------
 
 const TB = GROCERY_TEXTBOOK;
 const tbKnownDigits = true;
-let tbSeed = CONFIG.defaultSeed;
+let tbExperiment = null;   // null: textbook example; otherwise { seed, dists }
 
 /**
- * The textbook table with automatically generated service digits: each digit is
- * drawn from the random-digit interval of the published service time, so the
- * service times, and therefore every other column and total, stay as published.
+ * The textbook example: published arrival digits and times, published service
+ * times, and service digits generated inside the random-digit interval of each
+ * published service time (with the default seed, so they are always the same).
  */
-function buildTextbook(seed) {
-  const serviceDigits = generateDigitsForTimes(TB.serviceTimes, DISTRIBUTIONS.groceryService, createRng(seed));
+function buildTextbook() {
+  const serviceDigits = generateDigitsForTimes(TB.serviceTimes, DISTRIBUTIONS.groceryService, createRng(CONFIG.defaultSeed));
   return simulateSingleServer({
     interarrival: TB.interarrivalTimes,
     service: TB.serviceTimes,
@@ -164,7 +170,13 @@ function buildTextbook(seed) {
     serviceDigits
   });
 }
-let tbResult = buildTextbook(tbSeed);
+
+/** An experiment: 20 customers with new random digits and the current distributions. */
+function buildExperiment(seed, d) {
+  return simulateSingleServerSeeded({ seed, n: TB.customers, arrivalDist: d.arrival, serviceDist: d.service });
+}
+
+let tbResult = buildTextbook();
 const tbCols = columns({ serviceDigitsKnown: tbKnownDigits });
 // Which event reveals which cells of a row: the hand table is filled left to right.
 const REVEAL = {
@@ -178,15 +190,23 @@ const tbAnim = new QueueAnimator($('#tb-anim'));
 tbAnim.load(tbResult.events, tbResult.rows);
 const tbDelay = setupSpeed($('#tb-speed'), $('#tb-speed-out'));
 let tbStages = new Array(TB.customers).fill(0);
-
 renderTable(tbTable, tbCols, tbResult.rows, { footLabel: 'Totals' });
-function digitNote() {
-  $('#tb-digit-note').textContent = `The service random digits were generated automatically (seed ${tbSeed}): each one is a random number inside the random-digit interval of the published service time, so the service times and totals stay as in the textbook. Press "New service digits" for another set.`;
+
+function sourceNote() {
+  const box = $('#tb-source');
+  if (!tbExperiment) {
+    box.textContent = 'Textbook example from the slides: the arrival random digits, times between arrivals and service times are those of the slides. '
+      + 'The service random digits are generated inside the random-digit interval of each published service time. '
+      + 'Press "New random digits" to try a new experiment with the distributions in the input panel.';
+  } else {
+    box.textContent = `Experiment with new random digits (seed ${tbExperiment.seed}) and the distributions in the input panel `
+      + `(E(A) = ${fmt(tbExperiment.dists.arrival.expected)} minutes, E(S) = ${fmt(tbExperiment.dists.service.expected)} minutes). `
+      + 'Press "New random digits" for another experiment, or "Reset to textbook example" to return to the example of the slides.';
+  }
 }
-digitNote();
 
 function stagesAfter(k) {
-  const st = new Array(TB.customers).fill(0);
+  const st = new Array(tbResult.rows.length).fill(0);
   for (let i = 0; i < k; i++) {
     const e = tbResult.events[i];
     st[e.customer - 1] = Math.max(st[e.customer - 1], STAGE[e.type]);
@@ -194,6 +214,7 @@ function stagesAfter(k) {
   return st;
 }
 
+let tbExplainOverride = false;
 function tbRender(k) {
   const stages = stagesAfter(k);
   const rows = tbResult.rows;
@@ -223,18 +244,14 @@ function tbRender(k) {
   tbAnim.show(k);
   if (!tbExplainOverride) {
     $('#tb-explain').textContent = last
-      ? explainEvent(last, rows) + (done ? ` The replay is complete: the total run time is ${tbResult.totals.run} minutes.` : '')
+      ? explainEvent(last, rows) + (done ? ` The run is complete: the total run time is ${tbResult.totals.run} minutes.` : '')
       : 'Press "Next event" to process the first event, or "Next customer" to fill one complete row of the simulation table.';
   }
   tbExplainOverride = false;
   $('#tb-next-event').disabled = done;
   $('#tb-next-customer').disabled = done;
-  if (done && !tbPlayer.playing) $('#tb-run').disabled = true;
-  else $('#tb-run').disabled = false;
-  renderVerification(done);
-  renderTextbookResults(done);
+  $('#tb-run').disabled = done && !tbPlayer.playing;
 }
-let tbExplainOverride = false;
 
 const tbPlayer = new Player({
   total: tbResult.events.length,
@@ -246,6 +263,17 @@ const tbPlayer = new Player({
   }
 });
 
+/** Shows a new table (textbook or experiment) from its first event. */
+function loadStepTable() {
+  tbPlayer.stop();
+  tbAnim.load(tbResult.events, tbResult.rows);
+  tbStages = new Array(tbResult.rows.length).fill(0);
+  tbPlayer.setTotal(tbResult.events.length);
+  sourceNote();
+  renderStepResults();
+  tbPlayer.stepTo(0);
+}
+
 $('#tb-next-event').addEventListener('click', () => { tbPlayer.stop(); tbAnim.setDuration(500); tbPlayer.stepTo(tbPlayer.k + 1); });
 $('#tb-next-customer').addEventListener('click', () => {
   tbPlayer.stop();
@@ -253,59 +281,48 @@ $('#tb-next-customer').addEventListener('click', () => {
   const next = tbStages.findIndex((s) => s < 3) + 1;
   if (next === 0) return;
   const target = tbResult.events.findIndex((e) => e.type === 'departure' && e.customer === next) + 1;
-  const text = [explainEvent({ type: 'arrival', customer: next }, tbResult.rows),
-    explainEvent({ type: 'start', customer: next }, tbResult.rows),
-    explainEvent({ type: 'departure', customer: next }, tbResult.rows)].join(' ');
+  const text = ['arrival', 'start', 'departure'].map((type) => explainEvent({ type, customer: next }, tbResult.rows)).join(' ');
   tbAnim.setDuration(500);
   tbExplainOverride = true;
-  $('#tb-explain').textContent = text + (target >= tbResult.events.length ? ` The replay is complete: the total run time is ${tbResult.totals.run} minutes.` : '');
+  $('#tb-explain').textContent = text + (target >= tbResult.events.length ? ` The run is complete: the total run time is ${tbResult.totals.run} minutes.` : '');
   tbPlayer.stepTo(Math.max(target, tbPlayer.k));
 });
 $('#tb-run').addEventListener('click', () => { if (tbPlayer.playing) tbPlayer.stop(); else tbPlayer.play(); });
+$('#tb-restart').addEventListener('click', () => { tbPlayer.stop(); tbStages = new Array(tbResult.rows.length).fill(0); tbPlayer.stepTo(0); });
 $('#tb-new-digits').addEventListener('click', () => {
-  tbSeed = newSeed();
-  tbResult = buildTextbook(tbSeed);
-  digitNote();
-  tbRender(tbPlayer.k);
+  if (!distsOk) return;
+  tbExperiment = { seed: newSeed(), dists };
+  tbResult = buildExperiment(tbExperiment.seed, tbExperiment.dists);
+  loadStepTable();
 });
-$('#tb-reset').addEventListener('click', () => { tbPlayer.stop(); tbStages = new Array(TB.customers).fill(0); tbPlayer.stepTo(0); });
+$('#tb-textbook').addEventListener('click', () => {
+  tbExperiment = null;
+  distPanel.reset();   // restores the textbook distributions
+  tbResult = buildTextbook();
+  loadStepTable();
+});
 
-function renderVerification(done) {
+/** Results and findings of the complete 20-customer run shown in the table. */
+function renderStepResults() {
+  const E = tbExperiment
+    ? { EA: tbExperiment.dists.arrival.expected, ES: tbExperiment.dists.service.expected }
+    : { EA: DISTRIBUTIONS.groceryArrival.expected, ES: DISTRIBUTIONS.groceryService.expected };
+  const m = singleServerMeasures(tbResult.totals, E);
   const t = tbResult.totals;
-  const P = TB.publishedTotals;
-  const items = [
-    ['Sum of times between arrivals (min)', P.iat, t.iat],
-    ['Total service time (min)', P.service, t.service],
-    ['Total waiting time in queue (min)', P.wait, t.wait],
-    ['Total time customers spend in system (min)', P.system, t.system],
-    ['Total idle time of server (min)', P.idle, t.idle],
-    ['Customers who waited', P.waited, t.waited],
-    ['Total run time (min)', P.run, t.run]
-  ];
-  $('#tb-verify').innerHTML = `<div class="table-scroll"><table class="plain">
-    <thead><tr><th scope="col" class="text">Quantity</th><th scope="col">Published value</th><th scope="col">Computed value</th><th scope="col" class="text">Check</th></tr></thead>
-    <tbody>${items.map(([label, pub, comp]) => `<tr><td class="text">${label}</td><td>${pub}</td><td>${done ? comp : '<span class="muted">pending</span>'}</td><td class="text">${done
-      ? (pub === comp ? '<span class="check-ok">OK &#10003;</span>' : '<span class="check-bad">Different &#10007;</span>')
-      : '<span class="muted">complete the replay</span>'}</td></tr>`).join('')}</tbody>
-  </table></div>`;
-}
-
-function renderTextbookResults(done) {
-  const box = $('#tb-results');
-  if (!done) {
-    box.innerHTML = '<p class="muted">The eleven performance measures appear when the replay reaches the end. Press "Run to end" to complete it, or continue step by step.</p>';
-    return;
-  }
-  const m = singleServerMeasures(tbResult.totals, { EA: DISTRIBUTIONS.groceryArrival.expected, ES: DISTRIBUTIONS.groceryService.expected });
-  showResults(box, m,
-    `In this 20-customer run the average waiting time was ${fmt(m.avgWait)} minutes, ${pct(m.pWait)} of the customers waited, and the server was busy ${pct(m.pBusy)} of the time. `
-    + `The average service time (${fmt(m.avgService)} minutes) differs from E(S) = ${fmt(m.ES)} minutes and the average time between arrivals (${fmt(m.avgIAT)} minutes) differs from E(A) = ${fmt(m.EA)} minutes, because 20 customers are a small sample.`);
+  const what = tbExperiment ? 'In this experiment of 20 customers' : 'In the textbook example of 20 customers';
+  showResults($('#tb-results'), m,
+    `${what} the total run time was ${t.run} minutes; the customers waited ${t.wait} minutes in total, and ${t.waited} of the 20 customers waited. `
+    + `The average waiting time was ${fmt(m.avgWait)} minutes, ${pct(m.pWait)} of the customers waited, and the server was busy ${pct(m.pBusy)} of the time. `
+    + `The average service time (${fmt(m.avgService)} minutes) is compared with E(S) = ${fmt(m.ES)} minutes and the average time between arrivals (${fmt(m.avgIAT)} minutes) with E(A) = ${fmt(m.EA)} minutes; they differ because 20 customers are a small sample.`);
 }
 
 $('#tb-csv').addEventListener('click', () => {
-  downloadCSV(`grocery-textbook-20-customers-seed-${tbSeed}.csv`, CSV_HEADER, csvRows(tbResult.rows, false, tbKnownDigits));
+  const name = tbExperiment ? `grocery-20-customers-seed-${tbExperiment.seed}.csv` : 'grocery-textbook-example-20-customers.csv';
+  downloadCSV(name, CSV_HEADER, csvRows(tbResult.rows, false, tbKnownDigits));
 });
 
+sourceNote();
+renderStepResults();
 tbRender(0);
 
 // ---------------------------------------------------------------------------
@@ -511,7 +528,7 @@ const started = { day: false, days: false };
 setupTabs($('#mode-tabs'), (mode) => {
   tbPlayer.stop();
   dayPlayer.stop();
-  distPanel.setEditable(mode !== 'textbook');
+  distPanel.setEditable(true);   // the distributions can be chosen in every mode
   applyDists(distPanel.get(), distPanel.ok(), false);
   if (mode === 'day' && !started.day) { started.day = true; runDay(); }
   if (mode === 'days' && !started.days) { started.days = true; runDays(); }

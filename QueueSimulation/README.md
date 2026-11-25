@@ -11,7 +11,7 @@ The full specification is in [`SPEC.md`](SPEC.md).
 | File | Content |
 | --- | --- |
 | `index.html` | Landing page and links |
-| `single-server.html` | Grocery Checkout: textbook replay, one day, fifty days |
+| `single-server.html` | Grocery Checkout: step by step (textbook example and experiments), one day, fifty days |
 | `multi-server.html` | Able and Baker: step-by-step replay of 26 calls, one run, many runs |
 | `about.html` | Method, notation, glossary, sources, responsible use |
 | `tests/tests.html` | Automated verification tests |
@@ -49,7 +49,7 @@ export const CONFIG = {
 ```
 
 - `enableBakerFirstRule`: the initial state of the "Baker-first rule" toggle button on the two-server page. Students can switch the rule on and off with the button; when it is on, Baker takes a call that arrives while both servers are idle. A comparison of both rules with the same seed is always shown in the "One run" mode.
-- `enableProbabilityEditing`: allows students to edit the distributions (times, probabilities, and added or removed rows) in the modes that use random digits. The textbook replay of the Grocery Checkout always uses the textbook distributions.
+- `enableProbabilityEditing`: allows students to choose the distributions: the textbook distribution, a discrete uniform distribution, a constant time, or a custom table entered manually (times, probabilities, and added or removed rows).
 - `showFormulas`: shows the formula icons in the table headings and the formula column in the results.
 - `defaultSeed`: the seed used when a page opens.
 
@@ -57,7 +57,7 @@ Edit the file on GitHub, commit, and GitHub Pages publishes the change within a 
 
 ## Textbook data (`data/`)
 
-- `data/grocery-textbook.js`: the 20-customer Grocery Checkout run. The service random digits are generated automatically by the page: each one is a random two-digit value inside the random-digit interval of the published service time, so the table always agrees with the published totals. The "New service digits" button draws another set.
+- `data/grocery-textbook.js`: the 20-customer Grocery Checkout example of the slides. The "Step by step (20 customers)" tab opens with this example. Its service random digits are generated automatically inside the random-digit interval of each published service time, so the table agrees with the published totals. "New random digits" starts an experiment: new arrival and service digits are drawn and converted with the distributions chosen in the input panel. "Reset to textbook example" returns to the example and restores the textbook distributions.
 - `data/callcenter-textbook.js`: the 26-call Able and Baker run. Enter the arrival digits (26 values, the first one `null`) and the service digits (26 values) from slides 84 to 112, then set `confirmed: true`. Until then, the "Step-by-step replay (26 calls)" tab uses random digits generated from a seed, and shows the published results only for comparison. Once confirmed, the tab becomes "Textbook replay (26 calls)", the replay uses the textbook digits, and test 7 checks the published results (run length 62, Able 90%, Baker 69%, 9 of 26 waited, average delay 0.42, 1.22 for those who waited). If a check fails, the data or the distributions need correcting.
 
 The probability distributions of both examples are in `js/distributions.js`.

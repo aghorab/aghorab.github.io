@@ -18,9 +18,6 @@ export const GROCERY_TEXTBOOK = {
   // published service time (see generateDigitsForTimes in distributions.js), so
   // that the table always agrees with the published service times and totals.
 
-  // Published totals used for the verification panel under the table.
-  publishedTotals: { iat: 82, service: 68, wait: 56, system: 124, idle: 18, waited: 13, run: 86 },
-
   // Average waiting time over 50 days quoted on slide 14/14 (findings 3/4).
   slideAvgWait50Days: 1.32
 };
