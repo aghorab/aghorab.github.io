@@ -18,7 +18,7 @@
 
   if (!endpoint || !sitekey) {
     button.disabled = true;
-    say('Applications open very soon. Until then, email me at aghorab.slovakia@gmail.com and I will add you.', 'info');
+    say('Applications open very soon. Until then, email me at aghorab.sk@gmail.com and I will add you.', 'info');
     return;
   }
 
