@@ -2,8 +2,8 @@
 // charts, distribution panel and the SVG queue animation.
 // This module touches the DOM; the engines never do.
 
-import { CONFIG } from './config.js';
-import { makeDistribution, assignmentText, validateDistribution } from './distributions.js';
+import { CONFIG } from './config.js?v=3';
+import { makeDistribution, assignmentText, validateDistribution } from './distributions.js?v=3';
 
 // ---------------------------------------------------------------------------
 // Small helpers

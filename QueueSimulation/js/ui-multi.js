@@ -1,17 +1,17 @@
 // DOM and animation code for multi-server.html (Able and Baker call center).
 // All values shown come from the engine (multi-server.js) and measures.js.
 
-import { CONFIG } from './config.js';
-import { formatDigits, deriveSeed, normalizeSeed } from './rng.js';
-import { CALL_ARRIVAL, ABLE_SERVICE, BAKER_SERVICE } from './distributions.js';
-import { simulateMultiServer, simulateMultiServerSeeded, busyIntervals } from './multi-server.js';
-import { multiServerMeasures, runMeasures, summarize, histogram, relativeFrequency, mean } from './measures.js';
-import { CALLCENTER_TEXTBOOK } from '../data/callcenter-textbook.js';
+import { CONFIG } from './config.js?v=3';
+import { formatDigits, deriveSeed, normalizeSeed } from './rng.js?v=3';
+import { CALL_ARRIVAL, ABLE_SERVICE, BAKER_SERVICE } from './distributions.js?v=3';
+import { simulateMultiServer, simulateMultiServerSeeded, busyIntervals } from './multi-server.js?v=3';
+import { multiServerMeasures, runMeasures, summarize, histogram, relativeFrequency, mean } from './measures.js?v=3';
+import { CALLCENTER_TEXTBOOK } from '../data/callcenter-textbook.js?v=3';
 import {
   $, esc, fmt, pct, initChrome, setupTabs, renderTable, markCurrentRow, renderMeasures,
   renderReplicationTable, renderFrequencyTable, downloadCSV, barChart, lineWithAverage,
   createDistributionPanel, setupSpeed, QueueAnimator, Player, newSeed, nextFrame, onThemeChange
-} from './ui-common.js';
+} from './ui-common.js?v=3';
 
 initChrome();
 

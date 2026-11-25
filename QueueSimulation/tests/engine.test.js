@@ -1,23 +1,23 @@
 // Verification tests (SPEC Section 5.4). Runs in tests.html (browser) and can
 // also be imported by any ES-module runner: call runAllTests(fixture, rowsFixture).
 
-import { createRng } from '../js/rng.js';
+import { createRng } from '../js/rng.js?v=3';
 import {
   DISTRIBUTIONS, lookup, makeDistribution, generateDigitsForTimes,
   GROCERY_ARRIVAL, GROCERY_SERVICE, CALL_ARRIVAL, ABLE_SERVICE, BAKER_SERVICE
-} from '../js/distributions.js';
+} from '../js/distributions.js?v=3';
 import {
   simulateSingleServer, simulateSingleServerFromDigits, simulateSingleServerSeeded
-} from '../js/single-server.js';
+} from '../js/single-server.js?v=3';
 import {
   simulateMultiServer, simulateMultiServerSeeded, chooseServer, busyIntervals
-} from '../js/multi-server.js';
+} from '../js/multi-server.js?v=3';
 import {
   singleServerMeasures, dailyMeasures, singleServerKeyFindings, summarize,
   histogram, relativeFrequency, multiServerMeasures
-} from '../js/measures.js';
-import { GROCERY_TEXTBOOK } from '../data/grocery-textbook.js';
-import { CALLCENTER_TEXTBOOK } from '../data/callcenter-textbook.js';
+} from '../js/measures.js?v=3';
+import { GROCERY_TEXTBOOK } from '../data/grocery-textbook.js?v=3';
+import { CALLCENTER_TEXTBOOK } from '../data/callcenter-textbook.js?v=3';
 
 const D = DISTRIBUTIONS;
 const r2 = (x) => Math.round(x * 100) / 100;

@@ -1,7 +1,7 @@
 // Two-server (Able and Baker) simulation engine (SPEC Section 5.2). Pure functions, no DOM access.
 
-import { createRng } from './rng.js';
-import { lookup } from './distributions.js';
+import { createRng } from './rng.js?v=3';
+import { lookup } from './distributions.js?v=3';
 
 export const SERVERS = ['Able', 'Baker'];
 

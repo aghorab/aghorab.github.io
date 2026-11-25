@@ -1,20 +1,20 @@
 // DOM and animation code for single-server.html (Grocery Checkout).
 // All values shown come from the engine (single-server.js) and measures.js.
 
-import { CONFIG } from './config.js';
-import { formatDigits, deriveSeed, normalizeSeed, createRng } from './rng.js';
-import { GROCERY_ARRIVAL, GROCERY_SERVICE, DISTRIBUTIONS, generateDigitsForTimes } from './distributions.js';
-import { simulateSingleServer, simulateSingleServerSeeded } from './single-server.js';
+import { CONFIG } from './config.js?v=3';
+import { formatDigits, deriveSeed, normalizeSeed, createRng } from './rng.js?v=3';
+import { GROCERY_ARRIVAL, GROCERY_SERVICE, DISTRIBUTIONS, generateDigitsForTimes } from './distributions.js?v=3';
+import { simulateSingleServer, simulateSingleServerSeeded } from './single-server.js?v=3';
 import {
   singleServerMeasures, dailyMeasures, singleServerKeyFindings, summarize,
   histogram, relativeFrequency
-} from './measures.js';
-import { GROCERY_TEXTBOOK } from '../data/grocery-textbook.js';
+} from './measures.js?v=3';
+import { GROCERY_TEXTBOOK } from '../data/grocery-textbook.js?v=3';
 import {
   $, esc, fmt, pct, initChrome, setupTabs, renderTable, markCurrentRow, renderMeasures,
   renderReplicationTable, renderFrequencyTable, downloadCSV, barChart, lineWithAverage,
   createDistributionPanel, setupSpeed, QueueAnimator, Player, newSeed, nextFrame, onThemeChange
-} from './ui-common.js';
+} from './ui-common.js?v=3';
 
 initChrome();
 
