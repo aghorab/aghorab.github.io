@@ -1,8 +1,8 @@
 // Single-server simulation engine (SPEC Section 5.2). Pure functions, no DOM access.
 // The same code runs in the page and in the tests.
 
-import { createRng } from './rng.js';
-import { lookup } from './distributions.js';
+import { createRng } from './rng.js?v=3';
+import { lookup } from './distributions.js?v=3';
 
 /**
  * Draws the random digits for n customers from a seeded stream, in the order

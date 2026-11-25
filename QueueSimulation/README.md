@@ -62,6 +62,14 @@ Edit the file on GitHub, commit, and GitHub Pages publishes the change within a 
 
 The probability distributions of both examples are in `js/distributions.js`.
 
+## Publishing a change (browser cache)
+
+Browsers keep the JavaScript and CSS files of this site in their cache for some minutes. If a page loads a new HTML file together with an old cached script, the buttons stop working. Every local script, stylesheet and module import therefore ends with a version, for example `./js/ui-single.js?v=3`. After changing any `.js` or `.css` file, set a new version everywhere with one command from the repository root, then commit:
+
+```bash
+python QueueSimulation/tools/set-version.py 4
+```
+
 ## Files
 
 ```
@@ -77,6 +85,7 @@ js/ui-single.js          Interface of single-server.html
 js/ui-multi.js           Interface of multi-server.html
 data/                    Textbook input data
 tests/                   Test runner, tests and workbook fixtures
+tools/set-version.py     Sets the cache-busting version on all script and style references
 ```
 
 ## Open items for the instructor
