@@ -25,16 +25,16 @@ export function drawSingleServerDigits(seed, n, arrivalDist, serviceDist) {
  * example the workbook's digits) or drawn from a seed.
  * input: { arrivalDigits, serviceDigits, arrivalDist, serviceDist }
  */
-export function simulateSingleServerFromDigits({ arrivalDigits, serviceDigits, arrivalDist, serviceDist }) {
+export function simulateSingleServerFromDigits({ arrivalDigits, serviceDigits, arrivalDist, serviceDist, withEvents = true }) {
   const interarrival = arrivalDigits.map((d, i) => (i === 0 ? null : lookup(d, arrivalDist)));
   const service = serviceDigits.map((d) => lookup(d, serviceDist));
-  return simulateSingleServer({ interarrival, service, arrivalDigits, serviceDigits });
+  return simulateSingleServer({ interarrival, service, arrivalDigits, serviceDigits, withEvents });
 }
 
 /** Draws digits from a seed and runs the simulation table for n customers. */
-export function simulateSingleServerSeeded({ seed, n, arrivalDist, serviceDist }) {
+export function simulateSingleServerSeeded({ seed, n, arrivalDist, serviceDist, withEvents = true }) {
   const digits = drawSingleServerDigits(seed, n, arrivalDist, serviceDist);
-  const result = simulateSingleServerFromDigits({ ...digits, arrivalDist, serviceDist });
+  const result = simulateSingleServerFromDigits({ ...digits, arrivalDist, serviceDist, withEvents });
   result.seed = seed;
   return result;
 }
@@ -44,6 +44,7 @@ export function simulateSingleServerSeeded({ seed, n, arrivalDist, serviceDist }
  *   interarrival[i]: time since last arrival of customer i + 1 (null for customer 1)
  *   service[i]:      service time of customer i + 1
  * Digit arrays are optional and only copied into the rows for display.
+ * withEvents = false skips the animation event list (used by the replication modes).
  *
  * For customer i = 1 to n, with End(0) = 0:
  *   Arrival(1) = 0;  Arrival(i) = Arrival(i-1) + A(i)
@@ -53,7 +54,7 @@ export function simulateSingleServerSeeded({ seed, n, arrivalDist, serviceDist }
  *   System(i)  = End(i) - Arrival(i)         waiting time plus service time
  *   Idle(i)    = Begin(i) - End(i-1)         server idle before this customer
  */
-export function simulateSingleServer({ interarrival, service, arrivalDigits = null, serviceDigits = null }) {
+export function simulateSingleServer({ interarrival, service, arrivalDigits = null, serviceDigits = null, withEvents = true }) {
   const n = service.length;
   const rows = [];
   const totals = { n, iat: 0, service: 0, wait: 0, system: 0, idle: 0, waited: 0, run: 0, maxWait: 0 };
@@ -99,7 +100,7 @@ export function simulateSingleServer({ interarrival, service, arrivalDigits = nu
   // Total run time = time service of the last customer ends.
   totals.run = prevEnd;
 
-  return { rows, totals, events: buildSingleServerEvents(rows) };
+  return { rows, totals, events: withEvents ? buildSingleServerEvents(rows) : [] };
 }
 
 /**

@@ -27,6 +27,7 @@ export function chooseServer(arrival, freeAble, freeBaker, preferred = 'Able') {
  *     chosen, so they are used after the server is chosen, as in the textbook table.
  *     A plain `service` array (times) is applied to whichever server is chosen.
  *   preferred: 'Able' (default) or 'Baker'
+ *   withEvents: false skips the animation event list (replication mode)
  */
 export function simulateMultiServer({
   interarrival = null,
@@ -34,7 +35,8 @@ export function simulateMultiServer({
   serviceDigits = null,
   service = null,
   dists = null,
-  preferred = 'Able'
+  preferred = 'Able',
+  withEvents = true
 }) {
   const n = serviceDigits ? serviceDigits.length : service.length;
   const rows = [];
@@ -90,7 +92,7 @@ export function simulateMultiServer({
     prevArrival = arrival;
   }
 
-  return { rows, totals, events: buildMultiServerEvents(rows), preferred };
+  return { rows, totals, events: withEvents ? buildMultiServerEvents(rows) : [], preferred };
 }
 
 /** Draws digits from a seed: for each call, the arrival digit (from call 2), then the service digit. */
@@ -106,9 +108,9 @@ export function drawMultiServerDigits(seed, n, dists) {
 }
 
 /** Draws digits from a seed and runs the two-server table for n calls. */
-export function simulateMultiServerSeeded({ seed, n, dists, preferred = 'Able' }) {
+export function simulateMultiServerSeeded({ seed, n, dists, preferred = 'Able', withEvents = true }) {
   const digits = drawMultiServerDigits(seed, n, dists);
-  const result = simulateMultiServer({ ...digits, dists, preferred });
+  const result = simulateMultiServer({ ...digits, dists, preferred, withEvents });
   result.seed = seed;
   return result;
 }

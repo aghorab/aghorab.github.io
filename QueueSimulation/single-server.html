@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grocery Checkout | Queueing Simulation</title>
+  <meta name="description" content="Interactive single-server queue simulation (Grocery Checkout) using the simulation-table method of Chapter 3.">
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.js" integrity="sha384-zYPBGXwO4633CABX/5Spf6emCKUJCfoOkhOMYyxMsatqQZPnDblmmOewfjsIVWCM" crossorigin="anonymous" defer></script>
+  <script type="module" src="./js/ui-single.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the main content</a>
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="brand" href="./index.html">Queueing Simulation</a>
+      <nav aria-label="Main">
+        <a href="./single-server.html" aria-current="page">Single server</a>
+        <a href="./multi-server.html">Two servers</a>
+        <a href="./about.html">About</a>
+      </nav>
+      <div class="header-tools">
+        <button type="button" id="presentation-toggle" aria-pressed="false">Presentation mode</button>
+        <button type="button" id="theme-toggle">Dark theme</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    <h1>Grocery Checkout: a single-server queue</h1>
+    <p class="lead secondary">Customers arrive at one checkout counter, wait in a single line if the cashier is busy, are served in order of arrival, and leave. Times between arrivals and service times are read from random digits with the random-digit assignment tables below.</p>
+
+    <details class="panel dist secondary" id="dist-details">
+      <summary>Input distributions: probabilities, cumulative probabilities and random-digit assignments</summary>
+      <div id="dist-panel"></div>
+    </details>
+
+    <div class="tabs" role="tablist" aria-label="Simulation mode" id="mode-tabs">
+      <button type="button" role="tab" id="tab-textbook" data-mode="textbook" aria-controls="panel-textbook" aria-selected="true">Textbook replay (20 customers)</button>
+      <button type="button" role="tab" id="tab-day" data-mode="day" aria-controls="panel-day" aria-selected="false" tabindex="-1">One day (100 customers)</button>
+      <button type="button" role="tab" id="tab-days" data-mode="days" aria-controls="panel-days" aria-selected="false" tabindex="-1">Fifty days</button>
+    </div>
+
+    <!-- Mode 1: textbook replay -------------------------------------------->
+    <section id="panel-textbook" role="tabpanel" aria-labelledby="tab-textbook">
+      <div class="panel">
+        <div class="controls" aria-label="Replay controls">
+          <div class="control-group">
+            <button type="button" class="primary" id="tb-next-event">Next event</button>
+            <button type="button" id="tb-next-customer">Next customer</button>
+            <button type="button" id="tb-run">Run to end</button>
+            <button type="button" id="tb-reset">Reset</button>
+          </div>
+          <div class="speed">
+            <label for="tb-speed">Speed: <output id="tb-speed-out" for="tb-speed"></output></label>
+            <input type="range" id="tb-speed" min="1" max="10" step="1">
+          </div>
+        </div>
+        <div class="anim-panel" id="tb-anim"></div>
+        <p class="explain" id="tb-explain" aria-live="polite"></p>
+      </div>
+
+      <div class="panel">
+        <h2>Simulation table</h2>
+        <p class="muted small secondary">Each step fills the cells of the simulation table that the event determines; the cells that changed are highlighted. Select the <span aria-hidden="true">"i"</span> icon in a heading to see its formula.</p>
+        <div class="table-scroll"><table class="sim" id="tb-table"></table></div>
+        <p class="muted small" id="tb-digit-note"></p>
+        <p class="no-print"><button type="button" id="tb-csv">Download table as CSV</button></p>
+      </div>
+
+      <div class="panel">
+        <h2>Verification against the published totals</h2>
+        <div id="tb-verify"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Results</h2>
+        <div id="tb-results"></div>
+      </div>
+    </section>
+
+    <!-- Mode 2: one day ---------------------------------------------------->
+    <section id="panel-day" role="tabpanel" aria-labelledby="tab-day" hidden>
+      <div class="panel">
+        <div class="controls">
+          <div class="field">
+            <label for="day-seed">Seed</label>
+            <input type="text" id="day-seed" inputmode="numeric" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="day-n">Customers (2 to 1000)</label>
+            <input type="number" id="day-n" min="2" max="1000" step="1" value="100">
+          </div>
+          <div class="control-group">
+            <button type="button" class="primary" id="day-new">Run new day</button>
+            <button type="button" id="day-run">Run with this seed</button>
+          </div>
+        </div>
+        <p class="error" id="day-error" role="alert"></p>
+        <p class="status-line" id="day-status" role="status"></p>
+      </div>
+
+      <div class="panel anim-section">
+        <h2>Animation of the day</h2>
+        <div class="controls">
+          <div class="control-group">
+            <button type="button" class="primary" id="day-play">Play</button>
+            <button type="button" id="day-step">Next event</button>
+            <button type="button" id="day-end">Show the end of the day</button>
+            <button type="button" id="day-anim-reset">Reset animation</button>
+          </div>
+          <div class="speed">
+            <label for="day-speed">Speed: <output id="day-speed-out" for="day-speed"></output></label>
+            <input type="range" id="day-speed" min="1" max="10" step="1">
+          </div>
+        </div>
+        <div class="anim-panel" id="day-anim"></div>
+        <p class="explain" id="day-explain" aria-live="polite"></p>
+      </div>
+
+      <div class="panel">
+        <h2>Simulation table</h2>
+        <div class="table-scroll tall"><table class="sim" id="day-table"></table></div>
+        <p class="no-print"><button type="button" id="day-csv">Download table as CSV</button></p>
+      </div>
+
+      <div class="panel">
+        <h2>Results</h2>
+        <div id="day-results"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Charts</h2>
+        <div class="grid-2">
+          <figure>
+            <figcaption>Frequency of waiting time in queue</figcaption>
+            <div class="chart-box" id="day-chart-freq" data-label="Bar chart: number of customers in each waiting-time interval"></div>
+          </figure>
+          <div id="day-freq-table"></div>
+        </div>
+        <figure style="margin-top: 24px">
+          <figcaption>Waiting time in queue by customer</figcaption>
+          <div class="chart-box" id="day-chart-wait" data-label="Bar chart: waiting time of each customer"></div>
+        </figure>
+        <figure style="margin-top: 24px">
+          <figcaption>Service time: simulated vs theoretical</figcaption>
+          <div class="chart-box" id="day-chart-service" data-label="Grouped bar chart: simulated relative frequency and theoretical probability of each service time"></div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- Mode 3: fifty days ------------------------------------------------->
+    <section id="panel-days" role="tabpanel" aria-labelledby="tab-days" hidden>
+      <div class="panel">
+        <div class="controls">
+          <div class="field">
+            <label for="days-seed">Seed</label>
+            <input type="text" id="days-seed" inputmode="numeric" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="days-count">Days (1 to 500)</label>
+            <input type="number" id="days-count" min="1" max="500" step="1" value="50">
+          </div>
+          <div class="field">
+            <label for="days-n">Customers per day (2 to 1000)</label>
+            <input type="number" id="days-n" min="2" max="1000" step="1" value="100">
+          </div>
+          <div class="control-group">
+            <button type="button" class="primary" id="days-new">Run new experiment</button>
+            <button type="button" id="days-run">Run with this seed</button>
+          </div>
+        </div>
+        <p class="error" id="days-error" role="alert"></p>
+        <p class="status-line" id="days-status" role="status"></p>
+      </div>
+
+      <div class="panel">
+        <h2>Key findings</h2>
+        <div id="days-findings"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Measures per day</h2>
+        <p class="muted small secondary">Each day is one replication of the single-server queue with its own random digits. The rows under the table summarize each column.</p>
+        <div class="table-scroll tall"><table class="sim summary" id="days-table"></table></div>
+        <p class="no-print control-group">
+          <button type="button" id="days-csv">Download this table as CSV</button>
+          <button type="button" id="days-csv-all">Download all customer rows as CSV</button>
+        </p>
+      </div>
+
+      <div class="panel">
+        <h2>Charts</h2>
+        <div class="grid-2">
+          <figure>
+            <figcaption>Frequency of the daily average waiting time</figcaption>
+            <div class="chart-box" id="days-chart-freq" data-label="Bar chart: number of days in each interval of average waiting time"></div>
+          </figure>
+          <div id="days-freq-table"></div>
+        </div>
+        <figure style="margin-top: 24px">
+          <figcaption>Average waiting time by day</figcaption>
+          <div class="chart-box" id="days-chart-line" data-label="Line chart: average waiting time of each day with the overall average"></div>
+        </figure>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">Modeling and Simulation, Chapter 3 (Queueing Simulation). Based on Banks, Carson, Nelson and Nicol, <cite>Discrete-Event System Simulation</cite>, Example 2.1. <a href="./about.html">Method and sources</a>.</div>
+  </footer>
+</body>
+</html>
